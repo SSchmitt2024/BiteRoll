@@ -1,0 +1,21 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'A bucket to hold the static, React driven website'
+
+Resources:
+    BiteRollBucket: 
+        Type: 'AWS::S3::Bucket'
+        Properties: 
+            WebsiteConfiguration:
+                IndexDocument: index.html
+                ErrorDocument: error.html
+            PublicAccessBlockConfiguration:
+                BlockPublicAcls: true
+                BlockPublicPolicy: true
+                IgnorePublicAcls: true
+                RestrictPublicBuckets: true
+            BucketName: 'biteroll-static-site-sawyer'
+            Tags:
+                - Key: Project
+                  Value: BiteRoll
