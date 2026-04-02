@@ -1,0 +1,44 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'CloudFront to route to S3 bucket'
+
+Resources:
+    BiteRollCloudFront:
+        Type: 'AWS::CloudFront::Distribution'
+        Properties: 
+            DistributionConfig: 
+                Comment: "BiteRoll"
+                DefaultCacheBehavior: 
+                    ViewerProtocolPolicy: 'redirect-to-https'
+                    TargetOriginId: 'BiteRollS3Origin'
+                    CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  #CachingOptimized
+                Enabled: true
+                Origins: 
+                    - Id: 'BiteRollS3Origin'
+                      DomainName: !ImportValue DomainName
+                      OriginAccessControlId: !GetAtt BiteRollCloudFrontOAC.Id
+                DefaultRootObject: 'index.html'
+            Tags:
+                - Key: Project
+                  Value: BiteRoll
+    BiteRollCloudFrontOAC:
+        Type: 'AWS::CloudFront::OriginAccessControl'
+        Properties:
+            OriginAccessControlConfig:
+                Name: 'BiteRollCloudFrontOAC'
+                OriginAccessControlOriginType: S3
+                SigningBehavior: always
+                SigningProtocol: sigv4
+
+Outputs:
+    CloudFrontDistributionId:
+        Description: 'CloudFrontDistro ID used for letting traffic through it into s3'
+        Value: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${BiteRollCloudFront}'
+        Export:
+            Name: DistributionId
+
+
+
+
+

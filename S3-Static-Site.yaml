@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 
-Description: 'A bucket to hold the static, React driven website'
+Description: 'An S3 bucket to hold the static, React driven website'
 
 Resources:
     BiteRollBucket: 
@@ -19,3 +19,24 @@ Resources:
             Tags:
                 - Key: Project
                   Value: BiteRoll
+    BiteRollBucketPolicy:
+        Type: 'AWS::S3::BucketPolicy'
+        Properties:
+            Bucket: !Ref BiteRollBucket
+            PolicyDocument:
+                Statement:
+                    - Effect: Allow
+                      Principal: 
+                        Service: cloudfront.amazonaws.com
+                      Action: s3:GetObject
+                      Resource: !Sub 'arn:aws:s3:::${BiteRollBucket}/*'
+                      Condition:
+                        StringEquals:
+                            AWS:SourceArn: !ImportValue CloudFrontDistributionId
+
+Outputs:
+    BiteRollBucketDomainName:
+        Description: Outputs domain name
+        Value: !GetAtt BiteRollBucket.RegionalDomainName
+        Export:
+            Name: DomainName
