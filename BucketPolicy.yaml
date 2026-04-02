@@ -1,0 +1,22 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'An S3 bucket to hold the static, React driven website'
+
+Resources:
+    BiteRollBucketPolicy:
+        Type: 'AWS::S3::BucketPolicy'
+        Properties:
+            Bucket: !ImportValue BucketName
+            PolicyDocument:
+                Statement:
+                    - Effect: Allow
+                      Principal: 
+                        Service: cloudfront.amazonaws.com
+                      Action: s3:GetObject
+                      Resource: !Sub 
+                        - 'arn:aws:s3:::${BucketName}/*'
+                        - BucketName: !ImportValue BucketName
+                      Condition:
+                        StringEquals:
+                            AWS:SourceArn: !ImportValue CloudFrontDistributionId
