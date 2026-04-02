@@ -7,7 +7,7 @@ ________________________________________________________________________________
 [Stack]
 
 Front End:
-    - React
+    - React\n
     - React Routing
     - React Spring
     - CSS
