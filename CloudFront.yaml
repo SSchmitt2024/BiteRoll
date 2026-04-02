@@ -18,6 +18,8 @@ Resources:
                     - Id: 'BiteRollS3Origin'
                       DomainName: !ImportValue DomainName
                       OriginAccessControlId: !GetAtt BiteRollCloudFrontOAC.Id
+                      S3OriginConfig:
+                          OriginAccessIdentity: ''
                 DefaultRootObject: 'index.html'
             Tags:
                 - Key: Project
