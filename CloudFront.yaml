@@ -27,7 +27,7 @@ Resources:
         Properties:
             OriginAccessControlConfig:
                 Name: 'BiteRollCloudFrontOAC'
-                OriginAccessControlOriginType: S3
+                OriginAccessControlOriginType: s3
                 SigningBehavior: always
                 SigningProtocol: sigv4
 
