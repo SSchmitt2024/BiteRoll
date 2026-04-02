@@ -38,7 +38,7 @@ Outputs:
         Description: 'CloudFrontDistro ID used for letting traffic through it into s3'
         Value: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${BiteRollCloudFront}'
         Export:
-            Name: DistributionId
+            Name: CloudFrontDistributionId
 
 
 
