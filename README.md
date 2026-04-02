@@ -4,15 +4,15 @@ BiteRoll is a Tik-tok like application that uses a swipe based discovery method.
 
 ____________________________________________________________________________________________________________________________
 
-[Stack]
+# [Stack]
 
-Front End:
-    - React\n
+## Front End:
+    - React
     - React Routing
     - React Spring
     - CSS
 
-Infrastructure:
+## Infrastructure:
     - DNS) Route 53
     - CDN) CloudFront
     - Static Hosting) S3 for React static site
@@ -24,7 +24,7 @@ Infrastructure:
     - Media Storage) S3 for videos
     - External APIs) Google Maps
 
-DevOps:
+## DevOps:
     - Infrastructure as Code) CloudFormation
     - Deployment) CloudShell
     - Version Control) Github
