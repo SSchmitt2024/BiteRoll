@@ -11,3 +11,5 @@ aws cloudformation deploy \
 aws cloudformation deploy \
     --template-file BucketPolicy.yaml \
     --stack-name biteroll-s3-policy
+
+aws s3 cp index.html s3://biteroll-static-site-sawyer/
