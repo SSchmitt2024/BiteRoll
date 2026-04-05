@@ -31,8 +31,3 @@ ________________________________________________________________________________
     - Version Control) Github
     - Observability) CloudWatch + CloudTrail
     - Secrets) Secrets Manager
-
-    
-
-
-
