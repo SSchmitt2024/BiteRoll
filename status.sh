@@ -24,6 +24,12 @@ aws cloudfront get-distribution --id E3A0HS1T7YS44D \
 CF_Status=$?
 resources["CloudFront"]=$CF_Status
 
+echo -e "\n[ ===== Cognito Status ===== ]"
+aws cloudformation describe-stacks --stack-name biteroll-cognito --query 'Stacks[0].Outputs'
+COG_Status=$?
+resources["Cognito"]=$COG_Status
+
+#==============================================================================
 echo ""
 issues=0
 
