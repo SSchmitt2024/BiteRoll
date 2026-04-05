@@ -24,11 +24,21 @@ aws cloudfront list-distributions \
 CF_Status=$?
 resources["CloudFront"]=$CF_Status
 
+echo ""
+issues=0
+
 for resource in "${!resources[@]}"; do
     if [ ${resources[$resource]} -eq 0 ]; then
         echo "$resource : Running"
     else
         echo "$resource : ERROR"
+        issues=1
     fi
 done
+
+if [ $issues -eq 1 ]; then
+    echo -e "\nResources not fully up and running."
+else
+    echo -e "\nResources fully up and running."
+fi
 
