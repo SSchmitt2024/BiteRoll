@@ -33,6 +33,8 @@ resources["Cognito"]=$COG_Status
 echo ""
 issues=0
 
+echo -e "\n[ ==== General Status ==== ]\n"
+
 for resource in "${!resources[@]}"; do
     if [ ${resources[$resource]} -eq 0 ]; then
         echo "$resource : Running"
