@@ -1,6 +1,6 @@
 #!/bin/bash
 
-success = 1
+success=1
 
 aws cloudformation deploy \
     --template-file ../Infrastructure/S3-Static-Site.yaml \
