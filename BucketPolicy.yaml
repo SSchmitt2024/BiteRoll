@@ -20,6 +20,3 @@ Resources:
                       Condition:
                         StringEquals:
                             AWS:SourceArn: !ImportValue CloudFrontDistributionId
-        Tags:
-            - Key: Project
-              Value: BiteRoll
