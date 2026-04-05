@@ -3,7 +3,7 @@
 aws cloudformation deploy \
     --template-file ../Infrastructure/S3-Static-Site.yaml \
     --stack-name biteroll-s3-static-site
-aws s3 cp index.html s3://biteroll-static-site-sawyer/ #attaches index.html to bucket
+aws s3 cp ../frontend/index.html s3://biteroll-static-site-sawyer/ #attaches index.html to bucket
 
 aws cloudformation deploy \
     --template-file ../Infrastructure/CloudFront.yaml \
