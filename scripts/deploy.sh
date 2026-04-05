@@ -24,7 +24,7 @@ aws cloudformation deploy \
     --stack-name biteroll-cognito
 success=$?
 
-if [ success -eq 1]; then
+if [ $success -eq 1]; then
     echo -e "\nResources Deployed Successfully.\n"
 else
     echo -e "\nResources Failed to Deployed.\n"
