@@ -17,3 +17,5 @@ aws cloudformation deploy \
     --template-file Cognito.yaml \
     --stack-name biteroll-cognito
 
+./status.sh
+
