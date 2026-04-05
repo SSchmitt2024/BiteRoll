@@ -28,6 +28,5 @@ if [ $success -eq 1]; then
     echo -e "\nResources Deployed Successfully.\n"
 else
     echo -e "\nResources Failed to Deployed.\n"
-
+fi
 ./status.sh
-
