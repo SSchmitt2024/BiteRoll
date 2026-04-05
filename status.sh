@@ -1,8 +1,8 @@
 #!/bin/bash
 
-echo "========================="
-echo "     Resource Status"
-echo "========================="
+echo -e "========================="
+echo -e "     Resource Status"
+echo -e "=========================\n"
 
 
 aws resourcegroupstaggingapi get-resources --tag-filters \
@@ -11,10 +11,10 @@ aws resourcegroupstaggingapi get-resources --tag-filters \
     --output table \
 
 
-echo "\n[ ===== Bucket Status ===== ]"
+echo -e "\n[ ===== Bucket Status ===== ]"
 aws s3api head-bucket --bucket biteroll-static-site-sawyer
 
-echo "\n[ === CloudFront Status === ]"
+echo -e "\n[ === CloudFront Status === ]"
 aws cloudfront list-distributions \
     --query 'DistributionList.Items[*].{Status:Status,Enabled:Enabled,Domain:DomainName}' \
     --output table
