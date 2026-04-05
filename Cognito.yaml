@@ -16,8 +16,7 @@ Resources:
                     RequireSymbols: true
                     RequireUppercase: true
             UserPoolTags:
-                - Key: Project
-                  Value: BiteRoll
+                Project: BiteRoll
     CognitoUserPoolClient:
         Type: 'AWS::Cognito::UserPoolClient'
         Properties:
