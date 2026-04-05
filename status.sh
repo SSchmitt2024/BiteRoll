@@ -11,10 +11,10 @@ aws resourcegroupstaggingapi get-resources --tag-filters \
     --output table \
 
 
-echo "[ ===== Bucket Status ===== ]"
+echo "\n[ ===== Bucket Status ===== ]"
 aws s3api head-bucket --bucket biteroll-static-site-sawyer
 
-echo "[ === CloudFront Status === ]"
+echo "\n[ === CloudFront Status === ]"
 aws cloudfront list-distributions \
     --query 'DistributionList.Items[*].{Status:Status,Enabled:Enabled,Domain:DomainName}' \
     --output table
