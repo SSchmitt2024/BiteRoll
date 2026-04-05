@@ -14,6 +14,6 @@ aws cloudformation deploy \
     --stack-name biteroll-s3-policy
 
 aws cloudformation deploy \
-    --template-file cognito.yaml \
+    --template-file Cognito.yaml \
     --stack-name biteroll-cognito
 
