@@ -18,8 +18,8 @@ S3_Status=$?
 resources["S3"]=$S3_Status
 
 echo -e "\n[ === CloudFront Status === ]"
-aws cloudfront list-distributions \
-    --query 'DistributionList.Items[*].{Status:Status,Enabled:Enabled,Domain:DomainName}' \
+aws cloudfront get-distribution --id E3A0HS1T7YS44D \
+    --query 'Distribution.{Status:Status,Domain:DomainName}' \
     --output table
 CF_Status=$?
 resources["CloudFront"]=$CF_Status
@@ -37,8 +37,8 @@ for resource in "${!resources[@]}"; do
 done
 
 if [ $issues -eq 1 ]; then
-    echo -e "\nResources not fully up and running."
+    echo -e "\nResources not fully up and running.\n"
 else
-    echo -e "\nResources fully up and running."
+    echo -e "\nResources fully up and running.\n"
 fi
 
