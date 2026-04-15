@@ -4,13 +4,13 @@
 
 import { useState } from 'react'
 
-function Login() {
+export default function Login() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
 
     async function handleSubmit(e) {
         e.preventDefault()
-        console.log(`Login Successful\nEmail = ${email}\nPassword = ${password}`)
+        
     }
 
     return (
