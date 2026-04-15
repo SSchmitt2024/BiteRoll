@@ -3,6 +3,8 @@
 //
 
 import { useState } from 'react'
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function SignUp() {
     const [username, setUsername] = useState('');
@@ -10,6 +12,8 @@ export default function SignUp() {
     const [password, setPassword] = useState('')
     const [confirmPas, setConfirm] = useState('')
     const [fieldErrors, setFieldErrors] = useState({});
+    const { signUp } = useAuth();
+    const [authErr, setAuthError] = useState('')
 
     function validate() {
         const errs = {}
@@ -24,11 +28,23 @@ export default function SignUp() {
     async function handleSubmit(e) {
         e.preventDefault();
         const errs = validate();
+        setAuthError('');
+        setFieldErrors({});
         
         if (Object.keys(errs).length) { 
             setFieldErrors(errs);
-            if (errs.confirm) { setPassword(''); setConfirm(''); }
+            if (errs.confirm) { 
+                setPassword(''); 
+                setConfirm(''); 
+            }
             return;
+        }
+
+        try {
+            await signUp(username, email, password);
+            useNavigate('/Home.jsx');
+        } catch(err) {
+            setAuthError(err.message || 'Signup failed.');
         }
     }
 
@@ -66,6 +82,7 @@ export default function SignUp() {
                             {fieldErrors.confirm && <p>{fieldErrors.confirm}</p>}
                         </label>
                         <button type="submit">Submit</button>
+                        {authErr && <p>{authErr}</p>}
                     </form>
                 </div>
             </div>
