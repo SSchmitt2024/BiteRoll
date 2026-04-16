@@ -25,7 +25,10 @@ CF_Status=$?
 resources["CloudFront"]=$CF_Status
 
 echo -e "\n[ ===== Cognito Status ===== ]"
-aws cloudformation describe-stacks --stack-name biteroll-cognito --query 'Stacks[0].Outputs'
+aws cloudformation describe-stacks \
+  --stack-name biteroll-cognito \
+  --query 'Stacks[0].StackStatus' \
+  --output text
 COG_Status=$?
 resources["Cognito"]=$COG_Status
 

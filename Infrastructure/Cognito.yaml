@@ -8,6 +8,8 @@ Resources:
         Type: 'AWS::Cognito::UserPool'
         Properties:
             UserPoolName: 'UserPool'
+            UsernameAttributes:
+                - email
             Policies:
                 PasswordPolicy:
                     MinimumLength: 8
