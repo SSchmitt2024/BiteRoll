@@ -3,8 +3,15 @@
 //
 
 import { useState } from 'react'
-import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { COG_USER_POOL_ID, COG_CLIENT_ID } from '../aws-config'
+import { CognitoUserPool, CognitoUser, AuthenticationDetails, CognitoUserAttribute } from 'amazon-cognito-identity-js'
+
+const poolData = {
+    UserPoolId: COG_USER_POOL_ID,
+    ClientId: COG_CLIENT_ID
+}
+
+const userPool = new CognitoUserPool(poolData);
 
 export default function SignUp() {
     const [username, setUsername] = useState('');
@@ -12,8 +19,7 @@ export default function SignUp() {
     const [password, setPassword] = useState('')
     const [confirmPas, setConfirm] = useState('')
     const [fieldErrors, setFieldErrors] = useState({});
-    const { signUp } = useAuth();
-    const [authErr, setAuthError] = useState('')
+    
 
     function validate() {
         const errs = {}
@@ -28,7 +34,6 @@ export default function SignUp() {
     async function handleSubmit(e) {
         e.preventDefault();
         const errs = validate();
-        setAuthError('');
         setFieldErrors({});
         
         if (Object.keys(errs).length) { 
@@ -40,12 +45,20 @@ export default function SignUp() {
             return;
         }
 
-        try {
-            await signUp(username, email, password);
-            useNavigate('/Home.jsx');
-        } catch(err) {
-            setAuthError(err.message || 'Signup failed.');
+        const attributeList = [
+            new CognitoUserAttribute({ Name: 'email', Value: email }),
+            new CognitoUserAttribute({ Name: 'preferred_username', Value: username }),
+        ]
+        function callback(err, result){
+            if (err) {
+                console.log(err)
+                return
+            }
+            console.log(result)
         }
+        userPool.signUp(email, password, attributeList, null, callback)
+        
+
     }
 
     return (
@@ -82,7 +95,6 @@ export default function SignUp() {
                             {fieldErrors.confirm && <p>{fieldErrors.confirm}</p>}
                         </label>
                         <button type="submit">Submit</button>
-                        {authErr && <p>{authErr}</p>}
                     </form>
                 </div>
             </div>
