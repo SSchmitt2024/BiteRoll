@@ -3,6 +3,8 @@
 //
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+
 import { COG_USER_POOL_ID, COG_CLIENT_ID } from '../aws-config'
 import { CognitoUserPool, CognitoUser, AuthenticationDetails, CognitoUserAttribute } from 'amazon-cognito-identity-js'
 
@@ -11,15 +13,15 @@ const poolData = {
     ClientId: COG_CLIENT_ID
 }
 
-const userPool = new CognitoUserPool(poolData);
+const userPool = new CognitoUserPool(poolData)
 
 export default function SignUp() {
-    const [username, setUsername] = useState('');
+    const [username, setUsername] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPas, setConfirm] = useState('')
-    const [fieldErrors, setFieldErrors] = useState({});
-    
+    const [fieldErrors, setFieldErrors] = useState({})
+    const navigate = useNavigate()
 
     function validate() {
         const errs = {}
@@ -28,21 +30,21 @@ export default function SignUp() {
             errs.confirm = "Your passwords do not match. Please re-enter the correct password"
         }
 
-        return errs;
+        return errs
     }
 
     async function handleSubmit(e) {
-        e.preventDefault();
-        const errs = validate();
-        setFieldErrors({});
+        e.preventDefault()
+        const errs = validate()
+        setFieldErrors({})
         
         if (Object.keys(errs).length) { 
-            setFieldErrors(errs);
+            setFieldErrors(errs)
             if (errs.confirm) { 
-                setPassword(''); 
-                setConfirm(''); 
+                setPassword('') 
+                setConfirm('') 
             }
-            return;
+            return
         }
 
         const attributeList = [
@@ -55,10 +57,10 @@ export default function SignUp() {
                 return
             }
             console.log(result)
+            navigate('/confirm', { state: { email: email } })
         }
         userPool.signUp(email, password, attributeList, null, callback)
         
-
     }
 
     return (

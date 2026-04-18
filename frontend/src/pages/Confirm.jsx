@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
+
 import { COG_USER_POOL_ID, COG_CLIENT_ID } from '../aws-config'
 import { CognitoUserPool, CognitoUser, AuthenticationDetails, CognitoUserAttribute } from 'amazon-cognito-identity-js'
 
@@ -12,7 +14,9 @@ const userPool = new CognitoUserPool(poolData);
 
 export default function Confirm() {
     const [ code, setCode ] = useState('');
-    const email = 'sawyerals.nh@gmail.com'
+    const location = useLocation()
+
+    const email = location.state?.email
 
 
     async function handleSubmit(e) {

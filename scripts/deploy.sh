@@ -6,13 +6,13 @@ aws cloudformation deploy \
     --template-file ../Infrastructure/Cognito.yaml \
     --stack-name biteroll-cognito
 
-echo "Fetching Cognito config from CloudFormation..."
-export VITE_USER_POOL_ID=$(aws cloudformation list-exports \
+export VITE_COGNITO_USER_POOL_ID=$(aws cloudformation list-exports \
     --query "Exports[?Name=='CognitoUserPoolID'].Value" --output text)
-export VITE_CLIENT_ID=$(aws cloudformation list-exports \
+export VITE_COGNITO_CLIENT_ID=$(aws cloudformation list-exports \
     --query "Exports[?Name=='CognitoUserPoolClient'].Value" --output text)
-echo "  UserPoolId: $VITE_USER_POOL_ID"
-echo "  ClientId:   $VITE_CLIENT_ID"
+
+echo "VITE_COGNITO_USER_POOL_ID=$VITE_COGNITO_USER_POOL_ID" > ../frontend/.env
+echo "VITE_COGNITO_CLIENT_ID=$VITE_COGNITO_CLIENT_ID" >> ../frontend/.env
 
 cd ../frontend
 npm ci

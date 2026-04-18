@@ -10,6 +10,8 @@ Resources:
             UserPoolName: 'UserPool'
             UsernameAttributes:
                 - email
+            AutoVerifiedAttributes:
+                - email
             Policies:
                 PasswordPolicy:
                     MinimumLength: 8
