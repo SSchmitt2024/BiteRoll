@@ -1,0 +1,48 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'Rest API Gateway to handle traffic to lambda backend'
+
+Resources:
+    API:
+        Type: AWS::ApiGateway::RestApi
+        Properties:
+            Name: 'RestAPI'
+    Resource:
+        Type: AWS::ApiGateway::Resource
+        Properties:
+            RestApiId: !Ref API
+            ParentId: !GetAtt API.RootResourceId
+            PathPart: hello
+    Method:
+        Type: AWS::ApiGateway::Method
+        Properties:
+            RestApiId: !Ref API
+            ResourceId: !Ref Resource
+            HttpMethod: GET
+            AuthorizationType: NONE
+            Integration:
+                Type: AWS_PROXY
+                IntegrationHttpMethod: POST
+                Uri: !Sub 
+                  - 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations'
+                  - lambdaArn: !ImportValue LambdaFunctionARN
+    Deployment:
+        Type: AWS::ApiGateway::Deployment
+        Properties:
+            RestApiId: !Ref API
+        DependsOn: Method
+    Stage:
+        Type: AWS::ApiGateway::Stage
+        Properties:
+            RestApiId: !Ref API
+            DeploymentId: !Ref Deployment
+            StageName: dev
+    LambdaPermission:
+        Type: AWS::Lambda::Permission
+        Properties:
+            FunctionName: !ImportValue LambdaFunctionARN
+            Action: lambda:InvokeFunction
+            Principal: apigateway.amazonaws.com
+            SourceArn: !Sub 'arn:aws:apigateway:${AWS::Region}::/restapis/${API}/stages/dev/GET/hello'
+
