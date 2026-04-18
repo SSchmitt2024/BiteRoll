@@ -50,14 +50,14 @@ export default function Login() {
                 </div>
                 <div>
                     <form onSubmit={handleSubmit} className="login-form">
-                        <label>Enter You're Email
+                        <label>Enter Your Email
                             <input
                                 type="text"
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
                                 />
                         </label>
-                        <label>Enter You're Password
+                        <label>Enter Your Password
                             <input
                                 type="password"
                                 value={password}
@@ -65,10 +65,10 @@ export default function Login() {
                                 />
                         </label>
                         <button type="submit">Submit</button>
+                        <Link to="/signup">Don't have an account? Sign up</Link>
                     </form>
                 </div>
             </div>
-            <Link to="/signup">Don't have an account? Sign up</Link>
         </div>
 
     )
