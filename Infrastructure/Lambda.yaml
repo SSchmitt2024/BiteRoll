@@ -26,7 +26,11 @@ Resources:
             Code:
                 ZipFile: |
                     def handler(event, context):
-                        return {'statusCode': 200, 'body': 'hello world'}
+                        return {
+                            'statusCode': 200,
+                            'headers': {'Content-Type': 'application/json'},
+                            'body': '{"message": "hello world"}'
+                        }
             Runtime: python3.12   
             Handler: index.handler
             Role: !GetAtt IAMRole.Arn    
