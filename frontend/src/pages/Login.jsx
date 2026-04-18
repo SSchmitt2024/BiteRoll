@@ -3,6 +3,8 @@
 //
 
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
+
 import { COG_USER_POOL_ID, COG_CLIENT_ID } from '../aws-config'
 import { CognitoUserPool, CognitoUser , AuthenticationDetails } from 'amazon-cognito-identity-js'
 
@@ -66,6 +68,8 @@ export default function Login() {
                     </form>
                 </div>
             </div>
+            <Link to="/signup">Don't have an account? Sign up</Link>
         </div>
+
     )
 }
