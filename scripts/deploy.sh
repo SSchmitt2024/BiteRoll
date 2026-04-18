@@ -33,7 +33,7 @@ aws cloudformation deploy \
 
 aws cloudformation deploy \
     --template-file ../Infrastructure/Lambda.yaml \
-    --stack-name biteroll-Lambda \
+    --stack-name biteroll-lambda \
     --capabilities CAPABILITY_IAM
 
 
