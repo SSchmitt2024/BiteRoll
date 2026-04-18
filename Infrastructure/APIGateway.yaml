@@ -44,5 +44,5 @@ Resources:
             FunctionName: !ImportValue LambdaFunctionARN
             Action: lambda:InvokeFunction
             Principal: apigateway.amazonaws.com
-            SourceArn: !Sub 'arn:aws:apigateway:${AWS::Region}::/restapis/${API}/stages/dev/GET/hello'
+            SourceArn: !Sub 'arn:aws:apigateway:${AWS::Region}::/restapis/${API}/*'
 
