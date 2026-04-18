@@ -26,11 +26,35 @@ resources["CloudFront"]=$CF_Status
 
 echo -e "\n[ ===== Cognito Status ===== ]"
 aws cloudformation describe-stacks \
-  --stack-name biteroll-cognito \
-  --query 'Stacks[0].StackStatus' \
-  --output text
+    --stack-name biteroll-cognito \
+    --query 'Stacks[0].StackStatus' \
+    --output text
 COG_Status=$?
 resources["Cognito"]=$COG_Status
+
+echo -e "\n[ ===== Lambda Status ===== ]"
+aws cloudformation describe-stacks \
+    --stack-name biteroll-Lambda \
+    --query 'Stacks[0].StackStatus' \
+    --output text
+LAMBDA_Status=$?
+resources["Lambda"]=$LAMBDA_Status
+
+echo -e "\n[ === API Gateway Status === ]"
+aws cloudformation describe-stacks \
+    --stack-name biteroll-api-gateway \
+    --query 'Stacks[0].StackStatus' \
+    --output text
+API_Status=$?
+resources["APIGateway"]=$API_Status
+
+echo -e "\n[ ====== SNS Status ======= ]"
+aws cloudformation describe-stacks \
+    --stack-name biteroll-sns-topic \
+    --query 'Stacks[0].StackStatus' \
+    --output text
+SNS_Status=$?
+resources["SNS"]=$SNS_Status
 
 #==============================================================================
 echo ""

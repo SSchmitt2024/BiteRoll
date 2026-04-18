@@ -31,6 +31,20 @@ aws cloudformation deploy \
     --template-file ../Infrastructure/CloudFront.yaml \
     --stack-name biteroll-cloudfront
 
+aws cloudformation deploy \
+    --template-file ../Infrastructure/Lambda.yaml \
+    --stack-name biteroll-Lambda \
+    --capabilities CAPABILITY_IAM
+
+
+aws cloudformation deploy \
+    --template-file ../Infrastructure/APIGateway.yaml \
+    --stack-name biteroll-api-gateway
+
+aws cloudformation deploy \
+    --template-file ../Infrastructure/SNSTopic.yaml \
+    --stack-name biteroll-sns-topic \
+    --parameter-overrides AlertEmail=sawyerals.nh@gmail.com
 
 echo ""
 cd ../scripts

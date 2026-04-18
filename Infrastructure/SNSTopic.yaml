@@ -1,0 +1,118 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'BiteRoll SNS topic and CloudWatch alarms'
+
+Parameters:
+    AlertEmail:
+        Type: String
+        Description: Email address for alarm notifications
+
+Resources:
+    BiteRollSNSTopic:
+        Type: AWS::SNS::Topic
+        Properties:
+            TopicName: biteroll-alarms
+            Subscription:
+                - Protocol: email
+                  Endpoint: !Ref AlertEmail
+            Tags:
+                - Key: Project
+                  Value: BiteRoll
+
+    LambdaErrorAlarm:
+        Type: AWS::CloudWatch::Alarm
+        Properties:
+            AlarmName: BiteRoll-Lambda-Errors
+            AlarmDescription: Lambda is throwing errors
+            Namespace: AWS/Lambda
+            MetricName: Errors
+            Dimensions:
+                - Name: FunctionName
+                  Value: biteroll-api
+            Statistic: Sum
+            Period: 300
+            EvaluationPeriods: 1
+            Threshold: 5
+            ComparisonOperator: GreaterThanOrEqualToThreshold
+            AlarmActions:
+                - !Ref BiteRollSNSTopic
+
+    LambdaThrottleAlarm:
+        Type: AWS::CloudWatch::Alarm
+        Properties:
+            AlarmName: BiteRoll-Lambda-Throttles
+            AlarmDescription: Lambda is being throttled
+            Namespace: AWS/Lambda
+            MetricName: Throttles
+            Dimensions:
+                - Name: FunctionName
+                  Value: biteroll-api
+            Statistic: Sum
+            Period: 300
+            EvaluationPeriods: 1
+            Threshold: 1
+            ComparisonOperator: GreaterThanOrEqualToThreshold
+            AlarmActions:
+                - !Ref BiteRollSNSTopic
+
+    APIGateway5xxAlarm:
+        Type: AWS::CloudWatch::Alarm
+        Properties:
+            AlarmName: BiteRoll-APIGW-5xx
+            AlarmDescription: API Gateway server errors
+            Namespace: AWS/ApiGateway
+            MetricName: 5XXError
+            Dimensions:
+                - Name: ApiName
+                  Value: BiteRollAPI
+            Statistic: Sum
+            Period: 300
+            EvaluationPeriods: 1
+            Threshold: 5
+            ComparisonOperator: GreaterThanOrEqualToThreshold
+            AlarmActions:
+                - !Ref BiteRollSNSTopic
+
+    APIGateway4xxAlarm:
+        Type: AWS::CloudWatch::Alarm
+        Properties:
+            AlarmName: BiteRoll-APIGW-4xx
+            AlarmDescription: API Gateway client errors spiking
+            Namespace: AWS/ApiGateway
+            MetricName: 4XXError
+            Dimensions:
+                - Name: ApiName
+                  Value: BiteRollAPI
+            Statistic: Sum
+            Period: 300
+            EvaluationPeriods: 1
+            Threshold: 20
+            ComparisonOperator: GreaterThanOrEqualToThreshold
+            AlarmActions:
+                - !Ref BiteRollSNSTopic
+
+    APIGatewayLatencyAlarm:
+        Type: AWS::CloudWatch::Alarm
+        Properties:
+            AlarmName: BiteRoll-APIGW-Latency
+            AlarmDescription: API Gateway latency is too high
+            Namespace: AWS/ApiGateway
+            MetricName: Latency
+            Dimensions:
+                - Name: ApiName
+                  Value: BiteRollAPI
+            Statistic: Average
+            Period: 300
+            EvaluationPeriods: 1
+            Threshold: 2000
+            ComparisonOperator: GreaterThanOrEqualToThreshold
+            AlarmActions:
+                - !Ref BiteRollSNSTopic
+
+Outputs:
+    AlarmTopicArn:
+        Description: SNS Topic ARN for alarms
+        Value: !GetAtt BiteRollSNSTopic.TopicArn
+        Export:
+            Name: BiteRoll-AlarmTopicArn
