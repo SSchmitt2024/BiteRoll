@@ -13,13 +13,23 @@ Resources:
                     ViewerProtocolPolicy: 'redirect-to-https'
                     TargetOriginId: 'BiteRollS3Origin'
                     CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  #CachingOptimized
+                CacheBehaviors:
+                    - CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+                      ViewerProtocolPolicy: 'redirect-to-https'
+                      TargetOriginId: 'BiteRollMediaS3Origin'
+                      PathPattern: /media/*
                 Enabled: true
                 Origins: 
                     - Id: 'BiteRollS3Origin'
                       DomainName: !ImportValue DomainName
                       OriginAccessControlId: !GetAtt BiteRollCloudFrontOAC.Id
                       S3OriginConfig:
-                          OriginAccessIdentity: ''
+                        OriginAccessIdentity: ''
+                    - Id: 'BiteRollMediaS3Origin'
+                      DomainName: !ImportValue MediaDomainName
+                      OriginAccessControlId: !GetAtt BiteRollCloudFrontOAC.Id
+                      S3OriginConfig:
+                        OriginAccessIdentity: ''                      
                 DefaultRootObject: 'index.html'
             Tags:
                 - Key: Project

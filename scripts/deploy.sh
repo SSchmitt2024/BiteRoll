@@ -24,6 +24,10 @@ aws cloudformation deploy \
 aws s3 sync dist s3://biteroll-static-site-sawyer/ --delete
 
 aws cloudformation deploy \
+    --template-file ../Infrastructure/S3-Media.yaml \
+    --stack-name biteroll-s3-media
+
+aws cloudformation deploy \
     --template-file ../Infrastructure/BucketPolicy.yaml \
     --stack-name biteroll-s3-policy
 

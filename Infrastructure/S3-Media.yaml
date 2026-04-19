@@ -1,0 +1,30 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'An S3 bucket to hold the static, React driven website'
+
+Resources:
+    BiteRollMediaBucket:
+        Type: 'AWS::S3::Bucket'
+        Properties: 
+            PublicAccessBlockConfiguration:
+                BlockPublicAcls: true
+                BlockPublicPolicy: true
+                IgnorePublicAcls: true
+                RestrictPublicBuckets: true
+            BucketName: 'biteroll-media-sawyer'
+            Tags:
+                - Key: Project
+                  Value: BiteRoll
+
+Outputs:
+    BiteRollBucketDomainName:
+        Description: Outputs domain name
+        Value: !GetAtt BiteRollMediaBucket.RegionalDomainName
+        Export:
+            Name: MediaDomainName
+    BiteRollBucketName:
+        Description: Outputs the buckets name
+        Value: !Ref BiteRollMediaBucket
+        Export:
+            Name: MediaBucketName
