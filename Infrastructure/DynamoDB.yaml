@@ -18,3 +18,9 @@ Resources:
             Tags:
               - Key: Project
                 Value: BiteRoll
+
+Outputs:
+    BiteRollDynamoDBTable:
+        Value: !GetAtt BiteRollDynamoDBTable.Arn
+        Export:
+            Name: DynamoDBARN
