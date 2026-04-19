@@ -30,6 +30,10 @@ Resources:
                           - dynamodb:Query
                           - dynamodb:UpdateItem
                         Resource: !ImportValue DynamoDBARN
+                      - Effect: Allow
+                        Action:
+                         - secretsmanager:GetSecretValue
+                        Resource: !ImportValue SecretsARN
     LambdaFunction:
         Type: AWS::Lambda::Function
         Properties:

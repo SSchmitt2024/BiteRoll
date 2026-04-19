@@ -56,3 +56,4 @@ aws cloudformation deploy \
 echo ""
 cd ../scripts
 ./status.sh
+
