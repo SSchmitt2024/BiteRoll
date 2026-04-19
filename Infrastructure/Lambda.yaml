@@ -46,8 +46,8 @@ Resources:
             Handler: index.handler
             Role: !GetAtt IAMRole.Arn    
             Tags:
-              Project: BiteRoll
-
+              - Key: Project
+                Value: BiteRoll
 Outputs:
     LambdaFunction:
         Description: "Lambda function ARN"
