@@ -32,10 +32,13 @@ aws cloudformation deploy \
     --stack-name biteroll-cloudfront
 
 aws cloudformation deploy \
+    --template-file ../Infrastructure/DynamoDB.yaml \
+    --stack-name biteroll-DynamoDB
+
+aws cloudformation deploy \
     --template-file ../Infrastructure/Lambda.yaml \
     --stack-name biteroll-lambda \
     --capabilities CAPABILITY_IAM
-
 
 aws cloudformation deploy \
     --template-file ../Infrastructure/APIGateway.yaml \

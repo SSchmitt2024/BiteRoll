@@ -1,0 +1,20 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'Cognito to manage authentication and provide JWT for authorization'
+
+Resources:
+    BiteRollDynamoDBTable:
+        Type: AWS::DynamoDB::Table
+        Properties: 
+            TableName: BiteRollRestaurants
+            AttributeDefinitions:
+              - AttributeName: placeId
+                AttributeType: S
+            KeySchema:
+              - AttributeName: placeId
+                KeyType: HASH
+            BillingMode: PAY_PER_REQUEST
+            Tags:
+              - Key: Project
+                Value: BiteRoll
