@@ -39,15 +39,10 @@ Resources:
         Properties:
             FunctionName: biteroll-api
             Code:
-                ZipFile: |
-                    def handler(event, context):
-                        return {
-                            'statusCode': 200,
-                            'headers': {'Content-Type': 'application/json'},
-                            'body': '{"message": "hello world"}'
-                        }
+                S3Bucket: biteroll-static-site-sawyer
+                S3Key: lambda/lambda.py
             Runtime: python3.12   
-            Handler: index.handler
+            Handler: lambda.handler
             Role: !GetAtt IAMRole.Arn    
             Tags:
               - Key: Project

@@ -8,30 +8,78 @@ Resources:
         Type: AWS::ApiGateway::RestApi
         Properties:
             Name: 'RestAPI'
-    Resource:
+
+    # /feed
+    FeedResource:
         Type: AWS::ApiGateway::Resource
         Properties:
             RestApiId: !Ref API
             ParentId: !GetAtt API.RootResourceId
-            PathPart: hello
-    Method:
+            PathPart: feed
+    FeedMethod:
         Type: AWS::ApiGateway::Method
         Properties:
             RestApiId: !Ref API
-            ResourceId: !Ref Resource
+            ResourceId: !Ref FeedResource
             HttpMethod: GET
             AuthorizationType: NONE
             Integration:
                 Type: AWS_PROXY
                 IntegrationHttpMethod: POST
-                Uri: !Sub 
+                Uri: !Sub
                   - 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations'
                   - lambdaArn: !ImportValue LambdaFunctionARN
+
+    # /menu
+    MenuResource:
+        Type: AWS::ApiGateway::Resource
+        Properties:
+            RestApiId: !Ref API
+            ParentId: !GetAtt API.RootResourceId
+            PathPart: menu
+    MenuMethod:
+        Type: AWS::ApiGateway::Method
+        Properties:
+            RestApiId: !Ref API
+            ResourceId: !Ref MenuResource
+            HttpMethod: GET
+            AuthorizationType: NONE
+            Integration:
+                Type: AWS_PROXY
+                IntegrationHttpMethod: POST
+                Uri: !Sub
+                  - 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations'
+                  - lambdaArn: !ImportValue LambdaFunctionARN
+
+    # /like
+    LikeResource:
+        Type: AWS::ApiGateway::Resource
+        Properties:
+            RestApiId: !Ref API
+            ParentId: !GetAtt API.RootResourceId
+            PathPart: like
+    LikeMethod:
+        Type: AWS::ApiGateway::Method
+        Properties:
+            RestApiId: !Ref API
+            ResourceId: !Ref LikeResource
+            HttpMethod: POST
+            AuthorizationType: NONE
+            Integration:
+                Type: AWS_PROXY
+                IntegrationHttpMethod: POST
+                Uri: !Sub
+                  - 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations'
+                  - lambdaArn: !ImportValue LambdaFunctionARN
+
     Deployment:
         Type: AWS::ApiGateway::Deployment
         Properties:
             RestApiId: !Ref API
-        DependsOn: Method
+        DependsOn:
+          - FeedMethod
+          - MenuMethod
+          - LikeMethod
     Stage:
         Type: AWS::ApiGateway::Stage
         Properties:
@@ -45,4 +93,3 @@ Resources:
             Action: lambda:InvokeFunction
             Principal: apigateway.amazonaws.com
             SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*'
-

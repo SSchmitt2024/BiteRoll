@@ -39,6 +39,7 @@ aws cloudformation deploy \
     --template-file ../Infrastructure/DynamoDB.yaml \
     --stack-name biteroll-DynamoDB
 
+aws s3 cp ../lambda/lambda.py s3://biteroll-static-site-sawyer/lambda/lambda.py
 aws cloudformation deploy \
     --template-file ../Infrastructure/Lambda.yaml \
     --stack-name biteroll-lambda \
