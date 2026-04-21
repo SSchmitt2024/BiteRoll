@@ -20,6 +20,7 @@ def get_nearby_places(lat, lng, api_key):
     url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=5000&type=restaurant&opennow=true&key={api_key}"
     with urllib.request.urlopen(url) as response:
         data = json.loads(response.read())
+        print(f"[MAPS] Raw response status: {data.get('status')} error: {data.get('error_message', 'none')}")
     place_ids = [place['place_id'] for place in data.get('results', [])]
     print(f"[MAPS] Found {len(place_ids)} nearby restaurants for lat={lat}, lng={lng}")
     print(f"[MAPS] Place IDs: {place_ids}")
