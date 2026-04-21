@@ -4,6 +4,7 @@
 
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import { COG_USER_POOL_ID, COG_CLIENT_ID } from '../aws-config'
 import { CognitoUserPool, CognitoUser , AuthenticationDetails } from 'amazon-cognito-identity-js'
@@ -18,6 +19,7 @@ const userPool = new CognitoUserPool(poolData);
 export default function Login() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const navigate = useNavigate()
 
     async function handleSubmit(e) {
         e.preventDefault()
@@ -30,7 +32,10 @@ export default function Login() {
             Pool: userPool,
         }
         const callbacks = {
-            onSuccess: (result) => {console.log(result)},
+            onSuccess: (result) => {
+                console.log(result)
+                navigate('/feed')
+            },
             onFailure: (err) => {console.log(err)},
             newPasswordRequired: () => {},
 
