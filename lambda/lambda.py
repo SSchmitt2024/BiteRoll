@@ -5,12 +5,19 @@
 import boto3
 import json
 import urllib.request
+from decimal import Decimal
 
 HEADERS = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*'
 }
 
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, Decimal):
+            return int(o) if o % 1 == 0 else float(o)
+        return super().default(o)
+    
 def get_api_key():
     client = boto3.client('secretsmanager', region_name='us-east-2')
     secret = client.get_secret_value(SecretId='biteroll/google-maps-api-key')
@@ -69,7 +76,7 @@ def handler(event, context):
         return {
             'statusCode': 200,
             'headers': HEADERS,
-            'body': json.dumps({'restaurants': results})
+            'body': json.dumps({'restaurants': results}, cls=DecimalEncoder)
         }
 
     elif path == '/menu':
