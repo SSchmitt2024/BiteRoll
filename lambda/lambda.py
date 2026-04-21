@@ -22,6 +22,7 @@ def get_nearby_places(lat, lng, api_key):
         data = json.loads(response.read())
     place_ids = [place['place_id'] for place in data.get('results', [])]
     print(f"[MAPS] Found {len(place_ids)} nearby restaurants for lat={lat}, lng={lng}")
+    print(f"[MAPS] Place IDs: {place_ids}")
     return place_ids
 
 def handler(event, context):
