@@ -47,6 +47,7 @@ Resources:
             Tags:
               - Key: Project
                 Value: BiteRoll
+            Timeout: 30
 Outputs:
     LambdaFunction:
         Description: "Lambda function ARN"
