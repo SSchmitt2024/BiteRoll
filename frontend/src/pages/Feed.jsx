@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
+import SwipeCard from '../components/SwipeCard.jsx'
 
 export default function Feed() {
 
     const [restaurants, setRestaurants] = useState([])
+    const [currentIndex, setCurrentIndex] = useState(0)
 
     useEffect(() => {
         navigator.geolocation.getCurrentPosition(success, error)
@@ -19,13 +21,26 @@ export default function Feed() {
             setRestaurants(data.restaurants)
         })
     }
+
     function error(err) {
         console.log(`ERROR: ${err}`)
     }
-    
+
+    function onSwipe() {
+    setCurrentIndex(currentIndex + 1)
+    }
+
     console.log(restaurants)
     return (
-        <div>Feed</div>
-
+        <div className="feed">
+            {restaurants.length > 0 && currentIndex < restaurants.length ? (
+                <SwipeCard 
+                    restaurant={restaurants[currentIndex]} 
+                    onSwipe={onSwipe} 
+                />
+            ) : (
+                <div>No more restaurants</div>
+            )}
+        </div>
     )
 }

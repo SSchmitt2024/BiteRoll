@@ -66,6 +66,7 @@ def handler(event, context):
                 item = response['Item']
                 results.append({
                     'placeId': place_id,
+                    'name': item.get('name', ''),
                     'videos': item.get('videos', []),
                     'likeCount': item.get('likeCount', 0)
                 })
