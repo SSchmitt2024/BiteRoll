@@ -85,7 +85,7 @@ Resources:
         Properties:
             RestApiId: !Ref API
             DeploymentId: !Ref Deployment
-            StageName: dev
+            StageName: prod
     LambdaPermission:
         Type: AWS::Lambda::Permission
         Properties:
