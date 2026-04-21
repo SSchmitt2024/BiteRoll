@@ -17,15 +17,29 @@ def get_api_key():
     return json.loads(secret['SecretString'])['GOOGLE_MAPS_API_KEY']
 
 def get_nearby_places(lat, lng, api_key):
-    url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=5000&type=restaurant&opennow=true&key={api_key}"
-    with urllib.request.urlopen(url) as response:
+    url = "https://places.googleapis.com/v1/places:searchNearby"
+    payload = json.dumps({
+        "includedTypes": ["restaurant"],
+        "maxResultCount": 20,
+        "locationRestriction": {
+            "circle": {
+                "center": {"latitude": float(lat), "longitude": float(lng)},
+                "radius": 5000.0
+            }
+        }
+    })
+    req = urllib.request.Request(url, data=payload.encode(), method='POST')
+    req.add_header('Content-Type', 'application/json')
+    req.add_header('X-Goog-Api-Key', api_key)
+    req.add_header('X-Goog-FieldMask', 'places.id')
+    
+    with urllib.request.urlopen(req) as response:
         data = json.loads(response.read())
-        print(f"[MAPS] Raw response status: {data.get('status')} error: {data.get('error_message', 'none')}")
-    place_ids = [place['place_id'] for place in data.get('results', [])]
+    
+    print(f"[MAPS] Raw response: {json.dumps(data)[:500]}")
+    place_ids = [place['id'] for place in data.get('places', [])]
     print(f"[MAPS] Found {len(place_ids)} nearby restaurants for lat={lat}, lng={lng}")
-    print(f"[MAPS] Place IDs: {place_ids}")
     return place_ids
-
 def handler(event, context):
     path = event['path']
     params = event.get('queryStringParameters', {})
