@@ -40,7 +40,7 @@ Resources:
             FunctionName: biteroll-api
             Code:
                 S3Bucket: biteroll-static-site-sawyer
-                S3Key: lambda/lambda.py
+                S3Key: lambda/lambda.zip
             Runtime: python3.12   
             Handler: lambda.handler
             Role: !GetAtt IAMRole.Arn    
