@@ -1,11 +1,24 @@
-.swipe-card {
-    position: absolute;
-    width: 390px;
-    height: 844px;
-    border-radius: 16px;
+.feed {
+    background: #111;
+    position: relative;
     overflow: hidden;
-    cursor: grab;
-    user-select: none;
+    height: 100vh;
+    width: 100%;
+}
+
+.feed-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+}
+
+.swipe-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 }
 
 .swipe-card video {

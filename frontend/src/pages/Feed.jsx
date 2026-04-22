@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useSpring, animated } from '@react-spring/web'
+import { useDrag } from '@use-gesture/react'
 import SwipeCard from '../components/SwipeCard.jsx'
 
 export default function Feed() {
@@ -6,16 +8,18 @@ export default function Feed() {
     const [videoCards, setVideoCards] = useState([])
     const [currentIndex, setCurrentIndex] = useState(0)
     const [loading, setLoading] = useState(true)
+    const swiped = useRef(false)
+
+    const [{ y }, api] = useSpring(() => ({ y: 0 }))
 
     useEffect(() => {
         navigator.geolocation.getCurrentPosition(success, error)
     }, [])
 
-
     function success(position) {
-        const lat = position.coords.latitude 
-        const lng = position.coords.longitude 
-        
+        const lat = position.coords.latitude
+        const lng = position.coords.longitude
+
         fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/feed?lat=${lat}&lng=${lng}`)
         .then(response => response.json())
         .then(data => {
@@ -38,17 +42,31 @@ export default function Feed() {
         console.log(`ERROR: ${err}`)
     }
 
-    function onSwipe(direction) {
-        if (direction === 'up') {
-            setCurrentIndex(prev => (prev + 1) % videoCards.length)
-        } else if (direction === 'down') {
-            setCurrentIndex(prev => (prev - 1 + videoCards.length) % videoCards.length)
+    const bind = useDrag(({ active, movement: [, my] }) => {
+        if (swiped.current) return
+        if (active) {
+            api.start({ y: my, immediate: true })
+        } else {
+            if (Math.abs(my) > 100) {
+                swiped.current = true
+                const goUp = my < 0
+                api.start({
+                    y: goUp ? -window.innerHeight : window.innerHeight,
+                    onRest: () => {
+                        api.set({ y: 0 })
+                        setCurrentIndex(prev => {
+                            const len = videoCards.length
+                            if (goUp) return (prev + 1) % len
+                            return (prev - 1 + len) % len
+                        })
+                        swiped.current = false
+                    }
+                })
+            } else {
+                api.start({ y: 0 })
+            }
         }
-    }
-
-    const nextVideo = videoCards.length > 0
-        ? videoCards[(currentIndex + 1) % videoCards.length].video
-        : null
+    }, { axis: 'y' })
 
     if (loading) {
         return (
@@ -61,16 +79,22 @@ export default function Feed() {
         )
     }
 
+    if (videoCards.length === 0) return <div className="feed"></div>
+
+    const prevIndex = (currentIndex - 1 + videoCards.length) % videoCards.length
+    const nextIndex = (currentIndex + 1) % videoCards.length
+
     return (
-        <div className="feed">
-            {videoCards.length > 0 && (
-                <SwipeCard
-                    key={currentIndex}
-                    card={videoCards[currentIndex]}
-                    onSwipe={onSwipe}
-                    nextVideo={nextVideo}
-                />
-            )}
+        <div className="feed" {...bind()} style={{ touchAction: 'none' }}>
+            <animated.div className="feed-card" style={{ y: y.to(v => v - window.innerHeight) }}>
+                <SwipeCard key={videoCards[prevIndex].video} card={videoCards[prevIndex]} active={false} />
+            </animated.div>
+            <animated.div className="feed-card" style={{ y }}>
+                <SwipeCard key={videoCards[currentIndex].video} card={videoCards[currentIndex]} active={true} />
+            </animated.div>
+            <animated.div className="feed-card" style={{ y: y.to(v => v + window.innerHeight) }}>
+                <SwipeCard key={videoCards[nextIndex].video} card={videoCards[nextIndex]} active={false} />
+            </animated.div>
         </div>
     )
 }

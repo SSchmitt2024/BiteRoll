@@ -1,35 +1,19 @@
-import { useState, useRef } from 'react'
-import { useSpring, animated } from '@react-spring/web'
-import { useDrag } from '@use-gesture/react'
-
+import { useState, useRef, useEffect } from 'react'
 import '../../index.css'
 
-export default function SwipeCard({ card, onSwipe, nextVideo }) {
+export default function SwipeCard({ card, active }) {
     const [likes, updateLikes] = useState(card.likeCount)
     const [liked, setLiked] = useState(false)
     const [videoReady, setVideoReady] = useState(false)
     const videoRef = useRef(null)
-    
-    const swiped = useRef(false)
-    const [{ y }, api] = useSpring(() => ({ y: 0 }))
 
-    const bind = useDrag(({ active, movement: [, my] }) => {
-        if (swiped.current) return
+    useEffect(() => {
         if (active) {
-            api.start({ y: my })
+            videoRef.current?.play().catch(() => {})
         } else {
-            if (Math.abs(my) > 100) {
-                swiped.current = true
-                const direction = my < 0 ? 'up' : 'down'
-                api.start({
-                    y: my < 0 ? -1000 : 1000,
-                    onRest: () => onSwipe(direction)
-                })
-            } else {
-                api.start({ y: 0 })
-            }
+            videoRef.current?.pause()
         }
-    }, { axis: 'y' })
+    }, [active])
 
     function handleLike() {
         if (!liked) {
@@ -42,15 +26,22 @@ export default function SwipeCard({ card, onSwipe, nextVideo }) {
     }
 
     return (
-        <animated.div {...bind()} style={{ y, touchAction: 'none' }} className="swipe-card">
+        <div className="swipe-card">
             {!videoReady && <div className="video-loading"><div className="spinner"></div></div>}
-            <video ref={videoRef} src={card.video} autoPlay loop muted playsInline onCanPlay={() => setVideoReady(true)} />
-            {nextVideo && <link rel="preload" href={nextVideo} as="video" />}
+            <video
+                ref={videoRef}
+                src={card.video}
+                loop
+                muted
+                playsInline
+                preload="auto"
+                onCanPlay={() => setVideoReady(true)}
+            />
             <div className="card-overlay">
                 <h2>{card.name}</h2>
                 <button onClick={handleLike}>{liked ? '❤️' : '🤍'} {likes}</button>
                 <button>📋 Menu</button>
             </div>
-        </animated.div>
+        </div>
     )
 }
