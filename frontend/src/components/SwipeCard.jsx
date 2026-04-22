@@ -9,20 +9,20 @@ export default function SwipeCard({ card, onSwipe }) {
     const [liked, setLiked] = useState(false)
     const videoRef = useRef(null)
     
-    const [{ x, rotate }, api] = useSpring(() => ({ x: 0, rotate: 0 }))
+    const [{ y }, api] = useSpring(() => ({ y: 0 }))
 
-    const bind = useDrag(({ active, movement: [mx], direction: [dx] }) => {
+    const bind = useDrag(({ active, movement: [, my], direction: [, dy] }) => {
         if (active) {
-            api.start({ x: mx, rotate: mx / 10 })
+            api.start({ y: my })
         } else {
-            if (Math.abs(mx) > 100) {
-                api.start({ x: dx > 0 ? 1000 : -1000, rotate: mx / 10 })
-                onSwipe()
+            if (Math.abs(my) > 100) {
+                api.start({ y: dy > 0 ? 1000 : -1000 })
+                onSwipe(dy < 0 ? 'up' : 'down')
             } else {
-                api.start({ x: 0, rotate: 0 })
+                api.start({ y: 0 })
             }
         }
-    })
+    }, { axis: 'y' })
 
     function handleLike() {
         if (!liked) {
@@ -35,7 +35,7 @@ export default function SwipeCard({ card, onSwipe }) {
     }
 
     return (
-        <animated.div {...bind()} style={{ x, rotate, touchAction: 'none' }} className="swipe-card">
+        <animated.div {...bind()} style={{ y, touchAction: 'none' }} className="swipe-card">
             <video ref={videoRef} src={card.video} autoPlay loop muted playsInline />
             <div className="card-overlay">
                 <h2>{card.name}</h2>

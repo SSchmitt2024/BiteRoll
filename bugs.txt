@@ -1,5 +1,4 @@
-- only returns 1 video from each restaurant
-- swipe is left and right not up or down
+- videos should be put in random order, ex: 1 brgrbar, 1 meiwei, another brgr bar, moes. random every time
 - not a feed where you can swipe back and forth
 - should loop through the videos, never say "no restaurants"
 - takes a long time to load the videos

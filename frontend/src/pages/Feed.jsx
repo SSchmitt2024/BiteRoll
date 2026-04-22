@@ -32,19 +32,21 @@ export default function Feed() {
         console.log(`ERROR: ${err}`)
     }
 
-    function onSwipe() {
-    setCurrentIndex(currentIndex + 1)
+    function onSwipe(direction) {
+        if (direction === 'up') {
+            setCurrentIndex(prev => (prev + 1) % videoCards.length)
+        } else if (direction === 'down') {
+            setCurrentIndex(prev => (prev - 1 + videoCards.length) % videoCards.length)
+        }
     }
 
     return (
         <div className="feed">
-            {videoCards.length > 0 && currentIndex < videoCards.length ? (
+            {videoCards.length > 0 && (
                 <SwipeCard
                     card={videoCards[currentIndex]}
                     onSwipe={onSwipe}
                 />
-            ) : (
-                <div>No more restaurants</div>
             )}
         </div>
     )
