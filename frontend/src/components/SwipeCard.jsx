@@ -4,7 +4,6 @@ import '../../index.css'
 export default function SwipeCard({ card, active }) {
     const [likes, updateLikes] = useState(card.likeCount)
     const [liked, setLiked] = useState(false)
-    const [videoReady, setVideoReady] = useState(false)
     const videoRef = useRef(null)
 
     useEffect(() => {
@@ -27,7 +26,6 @@ export default function SwipeCard({ card, active }) {
 
     return (
         <div className="swipe-card">
-            {!videoReady && <div className="video-loading"><div className="spinner"></div></div>}
             <video
                 ref={videoRef}
                 src={card.video}
@@ -35,7 +33,6 @@ export default function SwipeCard({ card, active }) {
                 muted
                 playsInline
                 preload="auto"
-                onCanPlay={() => setVideoReady(true)}
             />
             <div className="card-overlay">
                 <h2>{card.name}</h2>

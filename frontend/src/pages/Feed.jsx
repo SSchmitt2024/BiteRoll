@@ -10,6 +10,7 @@ export default function Feed() {
     const [loading, setLoading] = useState(true)
     const swiped = useRef(false)
 
+    const CARD_HEIGHT = 844
     const [{ y }, api] = useSpring(() => ({ y: 0 }))
 
     useEffect(() => {
@@ -51,7 +52,7 @@ export default function Feed() {
                 swiped.current = true
                 const goUp = my < 0
                 api.start({
-                    y: goUp ? -window.innerHeight : window.innerHeight,
+                    y: goUp ? -CARD_HEIGHT : CARD_HEIGHT,
                     onRest: () => {
                         api.set({ y: 0 })
                         setCurrentIndex(prev => {
@@ -86,13 +87,13 @@ export default function Feed() {
 
     return (
         <div className="feed" {...bind()} style={{ touchAction: 'none' }}>
-            <animated.div className="feed-card" style={{ y: y.to(v => v - window.innerHeight) }}>
+            <animated.div className="feed-card" style={{ y: y.to(v => v - CARD_HEIGHT) }}>
                 <SwipeCard key={videoCards[prevIndex].video} card={videoCards[prevIndex]} active={false} />
             </animated.div>
             <animated.div className="feed-card" style={{ y }}>
                 <SwipeCard key={videoCards[currentIndex].video} card={videoCards[currentIndex]} active={true} />
             </animated.div>
-            <animated.div className="feed-card" style={{ y: y.to(v => v + window.innerHeight) }}>
+            <animated.div className="feed-card" style={{ y: y.to(v => v + CARD_HEIGHT) }}>
                 <SwipeCard key={videoCards[nextIndex].video} card={videoCards[nextIndex]} active={false} />
             </animated.div>
         </div>
