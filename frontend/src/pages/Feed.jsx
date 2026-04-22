@@ -32,8 +32,7 @@ export default function Feed() {
 
     console.log(restaurants)
     return (
-        <p>UPDATED</p>
-        /*
+        
         <div className="feed">
             {restaurants.length > 0 && currentIndex < restaurants.length ? (
                 <SwipeCard 
@@ -44,6 +43,6 @@ export default function Feed() {
                 <div>No more restaurants</div>
             )}
         </div>
-        */
+        
     )
 }
