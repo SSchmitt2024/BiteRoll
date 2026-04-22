@@ -22,6 +22,13 @@ Resources:
                       ViewerProtocolPolicy: 'redirect-to-https'
                       TargetOriginId: 'BiteRollMediaS3Origin'
                       PathPattern: /media/*
+                CustomErrorResponses:
+                  - ErrorCode: 403
+                    ResponseCode: 200
+                    ResponsePagePath: /index.html
+                  - ErrorCode: 404
+                    ResponseCode: 200
+                ResponsePagePath: /index.html
                 Enabled: true
                 Origins: 
                     - Id: 'BiteRollS3Origin'
