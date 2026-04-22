@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { flushSync } from 'react-dom'
 import { useSpring, animated } from '@react-spring/web'
 import { useDrag } from '@use-gesture/react'
 import SwipeCard from '../components/SwipeCard.jsx'
@@ -54,12 +55,14 @@ export default function Feed() {
                 api.start({
                     y: goUp ? -CARD_HEIGHT : CARD_HEIGHT,
                     onRest: () => {
-                        api.set({ y: 0 })
-                        setCurrentIndex(prev => {
-                            const len = videoCards.length
-                            if (goUp) return (prev + 1) % len
-                            return (prev - 1 + len) % len
+                        flushSync(() => {
+                            setCurrentIndex(prev => {
+                                const len = videoCards.length
+                                if (goUp) return (prev + 1) % len
+                                return (prev - 1 + len) % len
+                            })
                         })
+                        api.set({ y: 0 })
                         swiped.current = false
                     }
                 })
