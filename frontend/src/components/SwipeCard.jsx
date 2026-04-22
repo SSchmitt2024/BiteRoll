@@ -4,20 +4,27 @@ import { useDrag } from '@use-gesture/react'
 
 import '../../index.css'
 
-export default function SwipeCard({ card, onSwipe }) {
+export default function SwipeCard({ card, onSwipe, nextVideo }) {
     const [likes, updateLikes] = useState(card.likeCount)
     const [liked, setLiked] = useState(false)
+    const [videoReady, setVideoReady] = useState(false)
     const videoRef = useRef(null)
     
+    const swiped = useRef(false)
     const [{ y }, api] = useSpring(() => ({ y: 0 }))
 
-    const bind = useDrag(({ active, movement: [, my], direction: [, dy] }) => {
+    const bind = useDrag(({ active, movement: [, my] }) => {
+        if (swiped.current) return
         if (active) {
             api.start({ y: my })
         } else {
             if (Math.abs(my) > 100) {
-                api.start({ y: dy > 0 ? 1000 : -1000 })
-                onSwipe(dy < 0 ? 'up' : 'down')
+                swiped.current = true
+                const direction = my < 0 ? 'up' : 'down'
+                api.start({
+                    y: my < 0 ? -1000 : 1000,
+                    onRest: () => onSwipe(direction)
+                })
             } else {
                 api.start({ y: 0 })
             }
@@ -36,7 +43,9 @@ export default function SwipeCard({ card, onSwipe }) {
 
     return (
         <animated.div {...bind()} style={{ y, touchAction: 'none' }} className="swipe-card">
-            <video ref={videoRef} src={card.video} autoPlay loop muted playsInline />
+            {!videoReady && <div className="video-loading"><div className="spinner"></div></div>}
+            <video ref={videoRef} src={card.video} autoPlay loop muted playsInline onCanPlay={() => setVideoReady(true)} />
+            {nextVideo && <link rel="preload" href={nextVideo} as="video" />}
             <div className="card-overlay">
                 <h2>{card.name}</h2>
                 <button onClick={handleLike}>{liked ? '❤️' : '🤍'} {likes}</button>

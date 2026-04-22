@@ -5,6 +5,7 @@ export default function Feed() {
 
     const [videoCards, setVideoCards] = useState([])
     const [currentIndex, setCurrentIndex] = useState(0)
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         navigator.geolocation.getCurrentPosition(success, error)
@@ -29,6 +30,7 @@ export default function Feed() {
                 [cards[i], cards[j]] = [cards[j], cards[i]]
             }
             setVideoCards(cards)
+            setLoading(false)
         })
     }
 
@@ -44,12 +46,29 @@ export default function Feed() {
         }
     }
 
+    const nextVideo = videoCards.length > 0
+        ? videoCards[(currentIndex + 1) % videoCards.length].video
+        : null
+
+    if (loading) {
+        return (
+            <div className="feed">
+                <div className="loading-screen">
+                    <div className="spinner"></div>
+                    <p>Finding restaurants nearby...</p>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="feed">
             {videoCards.length > 0 && (
                 <SwipeCard
+                    key={currentIndex}
                     card={videoCards[currentIndex]}
                     onSwipe={onSwipe}
+                    nextVideo={nextVideo}
                 />
             )}
         </div>
