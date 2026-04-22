@@ -4,8 +4,8 @@ import { useDrag } from '@use-gesture/react'
 
 import '../../index.css'
 
-export default function SwipeCard({ restaurant, onSwipe }) {
-    const [likes, updateLikes] = useState(restaurant.likeCount)
+export default function SwipeCard({ card, onSwipe }) {
+    const [likes, updateLikes] = useState(card.likeCount)
     const [liked, setLiked] = useState(false)
     const videoRef = useRef(null)
     
@@ -26,7 +26,7 @@ export default function SwipeCard({ restaurant, onSwipe }) {
 
     function handleLike() {
         if (!liked) {
-            fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/like?placeId=${restaurant.placeId}`, {
+            fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/like?placeId=${card.placeId}`, {
                 method: 'POST'
             })
             updateLikes(likes + 1)
@@ -34,13 +34,11 @@ export default function SwipeCard({ restaurant, onSwipe }) {
         }
     }
 
-    const video = restaurant.videos[Math.floor(Math.random() * restaurant.videos.length)]
-
     return (
         <animated.div {...bind()} style={{ x, rotate, touchAction: 'none' }} className="swipe-card">
-            <video ref={videoRef} src={video} autoPlay loop muted playsInline />
+            <video ref={videoRef} src={card.video} autoPlay loop muted playsInline />
             <div className="card-overlay">
-                <h2>{restaurant.name}</h2>
+                <h2>{card.name}</h2>
                 <button onClick={handleLike}>{liked ? '❤️' : '🤍'} {likes}</button>
                 <button>📋 Menu</button>
             </div>

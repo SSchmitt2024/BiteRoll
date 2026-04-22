@@ -3,7 +3,7 @@ import SwipeCard from '../components/SwipeCard.jsx'
 
 export default function Feed() {
 
-    const [restaurants, setRestaurants] = useState([])
+    const [videoCards, setVideoCards] = useState([])
     const [currentIndex, setCurrentIndex] = useState(0)
 
     useEffect(() => {
@@ -18,7 +18,13 @@ export default function Feed() {
         fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/feed?lat=${lat}&lng=${lng}`)
         .then(response => response.json())
         .then(data => {
-            setRestaurants(data.restaurants)
+            const cards = data.restaurants.flatMap(restaurant =>
+                restaurant.videos.map(video => ({
+                    ...restaurant,
+                    video
+                }))
+            )
+            setVideoCards(cards)
         })
     }
 
@@ -30,19 +36,16 @@ export default function Feed() {
     setCurrentIndex(currentIndex + 1)
     }
 
-    console.log(restaurants)
     return (
-        
         <div className="feed">
-            {restaurants.length > 0 && currentIndex < restaurants.length ? (
-                <SwipeCard 
-                    restaurant={restaurants[currentIndex]} 
-                    onSwipe={onSwipe} 
+            {videoCards.length > 0 && currentIndex < videoCards.length ? (
+                <SwipeCard
+                    card={videoCards[currentIndex]}
+                    onSwipe={onSwipe}
                 />
             ) : (
                 <div>No more restaurants</div>
             )}
         </div>
-        
     )
 }

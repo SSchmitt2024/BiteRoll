@@ -1,0 +1,8 @@
+- only returns 1 video from each restaurant
+- swipe is left and right not up or down
+- not a feed where you can swipe back and forth
+- should loop through the videos, never say "no restaurants"
+- takes a long time to load the videos
+- no change range filter button
+- cant unlike
+- likes are stored, but a like to one restaurant effects them all
