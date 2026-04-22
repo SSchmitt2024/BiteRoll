@@ -12,8 +12,12 @@ Resources:
                 DefaultCacheBehavior: 
                     ViewerProtocolPolicy: 'redirect-to-https'
                     TargetOriginId: 'BiteRollS3Origin'
-                    CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  #CachingOptimized
+                    CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad  #CachingDisabled
                 CacheBehaviors:
+                    - CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  #CachingOptimized
+                      ViewerProtocolPolicy: 'redirect-to-https'
+                      TargetOriginId: 'BiteRollS3Origin'
+                      PathPattern: /assets/*
                     - CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
                       ViewerProtocolPolicy: 'redirect-to-https'
                       TargetOriginId: 'BiteRollMediaS3Origin'
