@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 
-Description: 'Cognito to manage authentication and provide JWT for authorization'
+Description: 'DB to hold restaurant info.'
 
 Resources:
     BiteRollDynamoDBTable:
