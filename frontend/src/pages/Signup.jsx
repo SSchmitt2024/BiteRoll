@@ -64,39 +64,58 @@ export default function SignUp() {
     }
 
     return (
-        <div className="signup-outer-box">
-            <div className="signup-inner-box">
-                <div className="signup-cleft">
-                    Banner will go here
+        <div className="auth-outer">
+            <div className="auth-card">
+                <div className="auth-banner">
+                    <div className="auth-brand">BiteRoll</div>
+                    <p className="auth-tagline">Find your next favorite meal.</p>
                 </div>
-                <div>
-                    <form onSubmit={handleSubmit} className="signupClass">
-                        <label> Enter your username
-                            <input 
-                            type="text"
-                            value={username}
-                            onChange={e => setUsername(e.target.value)}/>
+                <div className="auth-pane">
+                    <form onSubmit={handleSubmit} className="auth-form">
+                        <h1 className="auth-title">Create your account</h1>
+                        <p className="auth-subtitle">Start discovering bites nearby.</p>
+                        <label className="auth-field">
+                            <span>Username</span>
+                            <input
+                                type="text"
+                                value={username}
+                                onChange={e => setUsername(e.target.value)}
+                                placeholder="hungryhuman"
+                                autoComplete="username"
+                            />
                         </label>
-                        <label> Enter your email
-                            <input 
-                            type="text"
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}/>
+                        <label className="auth-field">
+                            <span>Email</span>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                                placeholder="you@example.com"
+                                autoComplete="email"
+                            />
                         </label>
-                        <label> Enter your password
-                            <input 
-                            type="password"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}/>
+                        <label className="auth-field">
+                            <span>Password</span>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                autoComplete="new-password"
+                            />
                         </label>
-                        <label> Confirm your password
-                            <input 
-                            type="password"
-                            value={confirmPas}
-                            onChange={e => setConfirm(e.target.value)}/>
-                            {fieldErrors.confirm && <p>{fieldErrors.confirm}</p>}
+                        <label className="auth-field">
+                            <span>Confirm password</span>
+                            <input
+                                type="password"
+                                value={confirmPas}
+                                onChange={e => setConfirm(e.target.value)}
+                                placeholder="••••••••"
+                                autoComplete="new-password"
+                            />
+                            {fieldErrors.confirm && <p className="auth-error">{fieldErrors.confirm}</p>}
                         </label>
-                        <button type="submit">Submit</button>
+                        <button type="submit" className="auth-submit">Create account</button>
                     </form>
                 </div>
             </div>

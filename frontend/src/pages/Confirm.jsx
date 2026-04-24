@@ -37,16 +37,35 @@ export default function Confirm() {
     }
 
     return (
-        <div className='confirm-outer-box'>
-            <form  onSubmit={handleSubmit} className='confirm-form'>
-                <label>Enter your code
-                    <input
-                    type='text'
-                    value={code}
-                    onChange={e => setCode(e.target.value)}/>
-                </label>
-                <button type="submit">Submit</button>
-            </form>
+        <div className="auth-outer">
+            <div className="auth-card">
+                <div className="auth-banner">
+                    <div className="auth-brand">BiteRoll</div>
+                    <p className="auth-tagline">Almost there.</p>
+                </div>
+                <div className="auth-pane">
+                    <form onSubmit={handleSubmit} className="auth-form">
+                        <h1 className="auth-title">Confirm your email</h1>
+                        <p className="auth-subtitle">
+                            {email
+                                ? <>We sent a code to <strong>{email}</strong>.</>
+                                : 'Enter the code we sent to your email.'}
+                        </p>
+                        <label className="auth-field">
+                            <span>Confirmation code</span>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                value={code}
+                                onChange={e => setCode(e.target.value)}
+                                placeholder="123456"
+                                autoComplete="one-time-code"
+                            />
+                        </label>
+                        <button type="submit" className="auth-submit">Confirm</button>
+                    </form>
+                </div>
+            </div>
         </div>
     )
 }
