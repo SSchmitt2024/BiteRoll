@@ -23,7 +23,7 @@ def get_api_key():
     secret = client.get_secret_value(SecretId='biteroll/google-maps-api-key')
     return json.loads(secret['SecretString'])['GOOGLE_MAPS_API_KEY']
 
-def get_nearby_places(lat, lng, api_key):
+def get_nearby_places(lat, lng, api_key, radius=5000.0):
     url = "https://places.googleapis.com/v1/places:searchNearby"
     payload = json.dumps({
         "includedTypes": ["restaurant"],
@@ -31,7 +31,7 @@ def get_nearby_places(lat, lng, api_key):
         "locationRestriction": {
             "circle": {
                 "center": {"latitude": float(lat), "longitude": float(lng)},
-                "radius": 5000.0
+                "radius": float(radius)
             }
         }
     })
@@ -56,8 +56,10 @@ def handler(event, context):
     if path == '/feed':
         lat = params['lat']
         lng = params['lng']
+        radius = float(params.get('radius', 5000))
+        radius = max(1.0, min(radius, 50000.0))
         api_key = get_api_key()
-        place_ids = get_nearby_places(lat, lng, api_key)
+        place_ids = get_nearby_places(lat, lng, api_key, radius)
         
         results = []
         for place_id in place_ids:
