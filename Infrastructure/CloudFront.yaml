@@ -57,7 +57,7 @@ Resources:
 Outputs:
     CloudFrontDistributionId:
         Description: 'CloudFrontDistro ID used for letting traffic through it into s3'
-        Value: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${BiteRollCloudFront}'
+        Value: !Ref BiteRollCloudFront
         Export:
             Name: CloudFrontDistributionId
 
