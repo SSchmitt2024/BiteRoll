@@ -4,6 +4,8 @@ import '../../index.css'
 export default function SwipeCard({ card, active, liked, likeCount, onToggleLike }) {
     const [menu, setMenu] = useState(null)
     const [menuOpen, setMenuOpen] = useState(false)
+    const [menuLoading, setMenuLoading] = useState(false)
+    const [menuError, setMenuError] = useState('')
     const videoRef = useRef(null)
 
     useEffect(() => {
@@ -14,25 +16,35 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
         }
     }, [active, menuOpen])
 
-    function handleMenu() {
-        if (menu) {
-            setMenuOpen(true)
-            return
+    async function handleMenu(e) {
+        e.stopPropagation()
+        setMenuError('')
+        setMenuOpen(true)
+
+        if (menu) return
+
+        setMenuLoading(true)
+        try {
+            const menuResponse = await fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/menu?placeId=${card.placeId}`)
+            if (!menuResponse.ok) throw new Error('Menu not found')
+
+            const menuData = await menuResponse.json()
+            if (!menuData.menuURL) throw new Error('Menu URL missing')
+
+            const fileResponse = await fetch(menuData.menuURL)
+            if (!fileResponse.ok) throw new Error('Menu file unavailable')
+
+            const fileData = await fileResponse.json()
+            setMenu(fileData)
+        } catch (error) {
+            setMenuError(error.message || 'Menu unavailable')
+        } finally {
+            setMenuLoading(false)
         }
-        fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/menu?placeId=${card.placeId}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.menuURL) return fetch(data.menuURL)
-            })
-            .then(res => res.json())
-            .then(data => {
-                setMenu(data)
-                setMenuOpen(true)
-            })
-            .catch(() => {})
     }
 
-    function handleLike() {
+    function handleLike(e) {
+        e.stopPropagation()
         onToggleLike(card.placeId, !liked)
     }
 
@@ -46,20 +58,22 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
                 playsInline
                 preload="auto"
             />
-            <div className="card-overlay" onPointerDown={e => e.stopPropagation()}>
+            <div className="card-overlay" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
                 <h2>{card.name}</h2>
-                <button onClick={handleLike}>{liked ? '❤️' : '🤍'} {likeCount}</button>
-                <button onClick={handleMenu}>📋 Menu</button>
+                <button onClick={handleLike}>{liked ? 'Liked' : 'Like'} {likeCount}</button>
+                <button onClick={handleMenu}>Menu</button>
             </div>
-            {menuOpen && menu && (
+            {menuOpen && (
                 <div className="menu-popup" onClick={() => setMenuOpen(false)}>
                     <div className="menu-popup-content" onClick={e => e.stopPropagation()}>
                         <div className="menu-popup-header">
-                            <h2>{menu.restaurant}</h2>
-                            <button onClick={() => setMenuOpen(false)}>✕</button>
+                            <h2>{menu?.restaurant || card.name}</h2>
+                            <button onClick={() => setMenuOpen(false)}>Close</button>
                         </div>
                         <div className="menu-popup-body">
-                            {menu.sections.map(section => (
+                            {menuLoading && <p className="menu-message">Loading menu...</p>}
+                            {menuError && <p className="menu-message">{menuError}</p>}
+                            {menu?.sections?.map(section => (
                                 <div key={section.name} className="menu-section">
                                     <h3>{section.name}</h3>
                                     {section.items.map(item => (
