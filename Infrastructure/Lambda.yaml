@@ -29,6 +29,7 @@ Resources:
                           - dynamodb:GetItem
                           - dynamodb:Query
                           - dynamodb:UpdateItem
+                          - dynamodb:Scan
                         Resource: !ImportValue DynamoDBARN
                       - Effect: Allow
                         Action:

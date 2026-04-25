@@ -61,7 +61,7 @@ export default function Feed() {
         const onKey = (e) => {
             if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                 e.preventDefault()
-                swipe(e.key === 'ArrowUp' ? 'up' : 'down')
+                swipe(e.key === 'ArrowDown' ? 'up' : 'down')
             }
         }
         el.addEventListener('wheel', onWheel, { passive: false })

@@ -4,6 +4,7 @@
 
 import boto3
 import json
+import math
 import urllib.request
 from botocore.exceptions import ClientError
 from decimal import Decimal
@@ -48,6 +49,14 @@ def get_nearby_places(lat, lng, api_key, radius=5000.0):
     place_ids = [place['id'] for place in data.get('places', [])]
     print(f"[MAPS] Found {len(place_ids)} nearby restaurants for lat={lat}, lng={lng}")
     return place_ids
+def haversine(lat1, lng1, lat2, lng2):
+    R = 6371000
+    rlat1, rlat2 = math.radians(lat1), math.radians(lat2)
+    dlat = math.radians(lat2 - lat1)
+    dlng = math.radians(lng2 - lng1)
+    a = math.sin(dlat/2)**2 + math.cos(rlat1)*math.cos(rlat2)*math.sin(dlng/2)**2
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+
 def handler(event, context):
     path = event['path']
     params = event.get('queryStringParameters', {})
@@ -63,6 +72,7 @@ def handler(event, context):
         place_ids = get_nearby_places(lat, lng, api_key, radius)
         
         results = []
+        found_ids = set()
         for place_id in place_ids:
             response = table.get_item(Key={'placeId': place_id})
             if 'Item' in response:
@@ -73,9 +83,30 @@ def handler(event, context):
                     'videos': item.get('videos', []),
                     'likeCount': item.get('likeCount', 0)
                 })
+                found_ids.add(place_id)
             else:
                 print(f"[FEED] No DynamoDB record for placeId={place_id}")
-        
+
+        scan_response = table.scan()
+        user_lat, user_lng = float(lat), float(lng)
+        for item in scan_response.get('Items', []):
+            pid = item['placeId']
+            if pid in found_ids:
+                continue
+            item_lat = item.get('lat')
+            item_lng = item.get('lng')
+            if not item_lat or not item_lng:
+                continue
+            dist = haversine(user_lat, user_lng, float(item_lat), float(item_lng))
+            if dist <= radius:
+                results.append({
+                    'placeId': pid,
+                    'name': item.get('name', ''),
+                    'videos': item.get('videos', []),
+                    'likeCount': item.get('likeCount', 0)
+                })
+                print(f"[FEED] Added seeded restaurant {pid} at {dist:.0f}m")
+
         print(f"[FEED] Returning {len(results)} restaurants")
         return {
             'statusCode': 200,

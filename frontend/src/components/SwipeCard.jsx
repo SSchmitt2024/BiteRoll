@@ -46,7 +46,7 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
                 playsInline
                 preload="auto"
             />
-            <div className="card-overlay">
+            <div className="card-overlay" onPointerDown={e => e.stopPropagation()}>
                 <h2>{card.name}</h2>
                 <button onClick={handleLike}>{liked ? '❤️' : '🤍'} {likeCount}</button>
                 <button onClick={handleMenu}>📋 Menu</button>
