@@ -4,7 +4,7 @@ import { useSpring, animated } from '@react-spring/web'
 import { useDrag } from '@use-gesture/react'
 import SwipeCard from '../components/SwipeCard.jsx'
 
-const RADIUS_OPTIONS_MILES = [1, 3, 5, 10]
+const RADIUS_OPTIONS_MILES = [1, 3, 5, 10, 100]
 const METERS_PER_MILE = 1609.344
 
 export default function Feed() {
