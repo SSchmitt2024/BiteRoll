@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+export AWS_PAGER=""
 trap 'status=$?; line=$LINENO; echo ""; echo "DEPLOY FAILED at line $line (exit code $status)"; exit $status' ERR
 
 echo "[ 1/10 ] Cognito"
@@ -75,7 +76,10 @@ aws cloudformation deploy --no-fail-on-empty-changeset \
 aws lambda update-function-code \
     --function-name biteroll-api \
     --s3-bucket biteroll-static-site-sawyer \
-    --s3-key lambda/lambda.zip
+    --s3-key lambda/lambda.zip \
+    --query "LastUpdateStatus" \
+    --output text \
+    --no-cli-pager
 
 echo "[ 9/10 ] API Gateway"
 aws cloudformation deploy --no-fail-on-empty-changeset \
