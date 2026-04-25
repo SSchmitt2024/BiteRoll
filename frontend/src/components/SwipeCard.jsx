@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useRef, useEffect } from 'react'
 import '../../index.css'
 
 export default function SwipeCard({ card, active }) {
@@ -8,6 +8,7 @@ export default function SwipeCard({ card, active }) {
     const [menuUrl, setMenuUrl] = useState(null)
     const [menuLoading, setMenuLoading] = useState(false)
     const [menuError, setMenuError] = useState(false)
+export default function SwipeCard({ card, active, liked, likeCount, onToggleLike }) {
     const videoRef = useRef(null)
 
     useEffect(() => {
@@ -19,13 +20,7 @@ export default function SwipeCard({ card, active }) {
     }, [active, menuOpen])
 
     function handleLike() {
-        if (!liked) {
-            fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/like?placeId=${card.placeId}`, {
-                method: 'POST'
-            })
-            updateLikes(likes + 1)
-            setLiked(true)
-        }
+        onToggleLike(card.placeId, !liked)
     }
 
     function handleOpenMenu() {
@@ -61,6 +56,8 @@ export default function SwipeCard({ card, active }) {
                 <h2>{card.name}</h2>
                 <button onClick={handleLike}>{liked ? '❤️' : '🤍'} {likes}</button>
                 <button onClick={handleOpenMenu}>📋 Menu</button>
+                <button onClick={handleLike}>{liked ? '❤️' : '🤍'} {likeCount}</button>
+                <button>📋 Menu</button>
             </div>
             {menuOpen && (
                 <div className="menu-overlay" onPointerDown={e => e.stopPropagation()}>
