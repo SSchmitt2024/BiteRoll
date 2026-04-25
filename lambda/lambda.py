@@ -5,6 +5,7 @@
 import boto3
 import json
 import urllib.request
+from botocore.exceptions import ClientError
 from decimal import Decimal
 
 HEADERS = {
@@ -23,7 +24,7 @@ def get_api_key():
     secret = client.get_secret_value(SecretId='biteroll/google-maps-api-key')
     return json.loads(secret['SecretString'])['GOOGLE_MAPS_API_KEY']
 
-def get_nearby_places(lat, lng, api_key):
+def get_nearby_places(lat, lng, api_key, radius=5000.0):
     url = "https://places.googleapis.com/v1/places:searchNearby"
     payload = json.dumps({
         "includedTypes": ["restaurant"],
@@ -31,7 +32,7 @@ def get_nearby_places(lat, lng, api_key):
         "locationRestriction": {
             "circle": {
                 "center": {"latitude": float(lat), "longitude": float(lng)},
-                "radius": 5000.0
+                "radius": float(radius)
             }
         }
     })
@@ -56,8 +57,10 @@ def handler(event, context):
     if path == '/feed':
         lat = params['lat']
         lng = params['lng']
+        radius = float(params.get('radius', 5000))
+        radius = max(1.0, min(radius, 50000.0))
         api_key = get_api_key()
-        place_ids = get_nearby_places(lat, lng, api_key)
+        place_ids = get_nearby_places(lat, lng, api_key, radius)
         
         results = []
         for place_id in place_ids:
@@ -101,11 +104,31 @@ def handler(event, context):
 
     elif path == '/like':
         placeId = params['placeId']
+        action = params.get('action', 'like')
+        if action == 'unlike':
+            print(f"[LIKE] Decrementing like for placeId={placeId}")
+            try:
+                table.update_item(
+                    Key={'placeId': placeId},
+                    UpdateExpression='SET likeCount = likeCount - :val',
+                    ConditionExpression='attribute_exists(likeCount) AND likeCount > :zero',
+                    ExpressionAttributeValues={':val': 1, ':zero': 0}
+                )
+            except ClientError as e:
+                if e.response['Error']['Code'] != 'ConditionalCheckFailedException':
+                    raise
+                print(f"[LIKE] Unlike skipped (likeCount already 0) for placeId={placeId}")
+            print(f"[LIKE] Unlike success for placeId={placeId}")
+            return {
+                'statusCode': 200,
+                'headers': HEADERS,
+                'body': json.dumps({'message': 'unlike recorded'})
+            }
         print(f"[LIKE] Incrementing like for placeId={placeId}")
         table.update_item(
             Key={'placeId': placeId},
-            UpdateExpression='SET likeCount = likeCount + :val',
-            ExpressionAttributeValues={':val': 1}
+            UpdateExpression='SET likeCount = if_not_exists(likeCount, :zero) + :val',
+            ExpressionAttributeValues={':val': 1, ':zero': 0}
         )
         print(f"[LIKE] Success for placeId={placeId}")
         return {

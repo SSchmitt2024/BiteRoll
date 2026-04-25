@@ -4,25 +4,35 @@ import { useSpring, animated } from '@react-spring/web'
 import { useDrag } from '@use-gesture/react'
 import SwipeCard from '../components/SwipeCard.jsx'
 
+const RADIUS_OPTIONS_MILES = [1, 3, 5, 10, 100]
+const METERS_PER_MILE = 1609.344
+
 export default function Feed() {
 
     const [videoCards, setVideoCards] = useState([])
     const [currentIndex, setCurrentIndex] = useState(0)
     const [loading, setLoading] = useState(true)
+    const [position, setPosition] = useState(null)
+    const [radiusMiles, setRadiusMiles] = useState(5)
+    const [likedPlaces, setLikedPlaces] = useState({})
+    const [likeDeltas, setLikeDeltas] = useState({})
     const swiped = useRef(false)
 
     const CARD_HEIGHT = 844
     const [{ y }, api] = useSpring(() => ({ y: 0 }))
 
     useEffect(() => {
-        navigator.geolocation.getCurrentPosition(success, error)
+        navigator.geolocation.getCurrentPosition(
+            pos => setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            () => setLoading(false)
+        )
     }, [])
 
-    function success(position) {
-        const lat = position.coords.latitude
-        const lng = position.coords.longitude
-
-        fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/feed?lat=${lat}&lng=${lng}`)
+    useEffect(() => {
+        if (!position) return
+        setLoading(true)
+        const radiusMeters = Math.round(radiusMiles * METERS_PER_MILE)
+        fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/feed?lat=${position.lat}&lng=${position.lng}&radius=${radiusMeters}`)
         .then(response => response.json())
         .then(data => {
             const cards = data.restaurants.flatMap(restaurant =>
@@ -36,15 +46,28 @@ export default function Feed() {
                 [cards[i], cards[j]] = [cards[j], cards[i]]
             }
             setVideoCards(cards)
+            setCurrentIndex(0)
             setLoading(false)
         })
         .catch(() => {
             setLoading(false)
         })
+    }, [position, radiusMiles])
+
+    function handleToggleLike(placeId, nextLiked) {
+        setLikedPlaces(prev => ({ ...prev, [placeId]: nextLiked }))
+        setLikeDeltas(prev => ({
+            ...prev,
+            [placeId]: (prev[placeId] || 0) + (nextLiked ? 1 : -1)
+        }))
+        const action = nextLiked ? 'like' : 'unlike'
+        fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/like?placeId=${placeId}&action=${action}`, {
+            method: 'POST'
+        })
     }
 
-    function error() {
-        setLoading(false)
+    function displayedLikeCount(card) {
+        return (card.likeCount || 0) + (likeDeltas[card.placeId] || 0)
     }
 
     const bind = useDrag(({ active, movement: [, my] }) => {
@@ -75,9 +98,22 @@ export default function Feed() {
         }
     }, { axis: 'y' })
 
+    const rangeFilter = (
+        <select
+            className="range-filter"
+            value={radiusMiles}
+            onChange={e => setRadiusMiles(Number(e.target.value))}
+        >
+            {RADIUS_OPTIONS_MILES.map(mi => (
+                <option key={mi} value={mi}>{mi} mi</option>
+            ))}
+        </select>
+    )
+
     if (loading) {
         return (
             <div className="feed">
+                {rangeFilter}
                 <div className="loading-screen">
                     <div className="spinner"></div>
                     <p>Finding restaurants nearby...</p>
@@ -86,13 +122,16 @@ export default function Feed() {
         )
     }
 
-    if (videoCards.length === 0) return (
-        <div className="feed">
-            <div className="loading-screen">
-                <p>No restaurants found. Please enable location access and refresh.</p>
+    if (videoCards.length === 0) {
+        return (
+            <div className="feed">
+                {rangeFilter}
+                <div className="loading-screen">
+                    <p>No restaurants found. Please enable location access and refresh.</p>
+                </div>
             </div>
-        </div>
-    )
+        )
+    }
 
     const prevIndex = (currentIndex - 1 + videoCards.length) % videoCards.length
     const nextIndex = (currentIndex + 1) % videoCards.length
@@ -100,14 +139,36 @@ export default function Feed() {
     return (
         <div className="feed" {...bind()} style={{ touchAction: 'none' }}>
             <animated.div className="feed-card" style={{ y: y.to(v => v - CARD_HEIGHT) }}>
-                <SwipeCard key={`prev-${prevIndex}`} card={videoCards[prevIndex]} active={false} />
+                <SwipeCard
+                    key={`prev-${prevIndex}`}
+                    card={videoCards[prevIndex]}
+                    active={false}
+                    liked={!!likedPlaces[videoCards[prevIndex].placeId]}
+                    likeCount={displayedLikeCount(videoCards[prevIndex])}
+                    onToggleLike={handleToggleLike}
+                />
             </animated.div>
             <animated.div className="feed-card" style={{ y }}>
-                <SwipeCard key={`current-${currentIndex}`} card={videoCards[currentIndex]} active={true} />
+                <SwipeCard
+                    key={`current-${currentIndex}`}
+                    card={videoCards[currentIndex]}
+                    active={true}
+                    liked={!!likedPlaces[videoCards[currentIndex].placeId]}
+                    likeCount={displayedLikeCount(videoCards[currentIndex])}
+                    onToggleLike={handleToggleLike}
+                />
             </animated.div>
             <animated.div className="feed-card" style={{ y: y.to(v => v + CARD_HEIGHT) }}>
-                <SwipeCard key={`next-${nextIndex}`} card={videoCards[nextIndex]} active={false} />
+                <SwipeCard
+                    key={`next-${nextIndex}`}
+                    card={videoCards[nextIndex]}
+                    active={false}
+                    liked={!!likedPlaces[videoCards[nextIndex].placeId]}
+                    likeCount={displayedLikeCount(videoCards[nextIndex])}
+                    onToggleLike={handleToggleLike}
+                />
             </animated.div>
+            {rangeFilter}
         </div>
     )
 }
