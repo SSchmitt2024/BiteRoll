@@ -4,7 +4,7 @@ set -e
 export AWS_PAGER=""
 trap 'status=$?; line=$LINENO; echo ""; echo "DEPLOY FAILED at line $line (exit code $status)"; exit $status' ERR
 
-echo "[ 1/10 ] Cognito"
+echo "[ 1/11 ] Cognito"
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/Cognito.yaml \
     --stack-name biteroll-cognito
@@ -17,28 +17,34 @@ export VITE_COGNITO_CLIENT_ID=$(aws cloudformation list-exports \
 echo "VITE_COGNITO_USER_POOL_ID=$VITE_COGNITO_USER_POOL_ID" > ../frontend/.env
 echo "VITE_COGNITO_CLIENT_ID=$VITE_COGNITO_CLIENT_ID" >> ../frontend/.env
 
-echo "[ 2/10 ] Frontend build"
+echo "[ 2/11 ] Frontend build"
 cd ../frontend
 npm ci
 npm run build
 
-echo "[ 3/10 ] S3 Static Site"
+echo "[ 3/11 ] S3 Static Site"
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/S3-Static-Site.yaml \
     --stack-name biteroll-s3-static-site
 aws s3 sync dist s3://biteroll-static-site-sawyer/ --delete --exclude "lambda/*"
 
-echo "[ 4/10 ] S3 Media"
+echo "[ 4/11 ] GitHub Actions IAM"
+aws cloudformation deploy --no-fail-on-empty-changeset \
+    --template-file ../Infrastructure/GitHubActionsIAM.yaml \
+    --stack-name biteroll-github-actions-iam \
+    --capabilities CAPABILITY_NAMED_IAM
+
+echo "[ 5/11 ] S3 Media"
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/S3-Media.yaml \
     --stack-name biteroll-s3-media
 
-echo "[ 5/10 ] CloudFront"
+echo "[ 6/11 ] CloudFront"
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/CloudFront.yaml \
     --stack-name biteroll-cloudfront
 
-echo "[ 6/10 ] Bucket Policy"
+echo "[ 7/11 ] Bucket Policy"
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/BucketPolicy.yaml \
     --stack-name biteroll-s3-policy
@@ -60,12 +66,12 @@ INVALIDATION_ID=$(aws cloudfront create-invalidation \
     --no-cli-pager)
 echo "Created CloudFront invalidation $INVALIDATION_ID"
 
-echo "[ 7/10 ] DynamoDB"
+echo "[ 8/11 ] DynamoDB"
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/DynamoDB.yaml \
     --stack-name biteroll-DynamoDB
 
-echo "[ 8/10 ] Lambda"
+echo "[ 9/11 ] Lambda"
 cd ../lambda
 zip lambda.zip lambda.py
 aws s3 cp lambda.zip s3://biteroll-static-site-sawyer/lambda/lambda.zip
@@ -81,12 +87,12 @@ aws lambda update-function-code \
     --output text \
     --no-cli-pager
 
-echo "[ 9/10 ] API Gateway"
+echo "[ 10/11 ] API Gateway"
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/APIGateway.yaml \
     --stack-name biteroll-api-gateway
 
-echo "[ 10/10 ] SNS"
+echo "[ 11/11 ] SNS"
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/SNSTopic.yaml \
     --stack-name biteroll-sns-topic \
