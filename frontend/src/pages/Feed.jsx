@@ -12,8 +12,8 @@ export default function Feed() {
     const [videoCards, setVideoCards] = useState([])
     const [currentIndex, setCurrentIndex] = useState(0)
     const [loading, setLoading] = useState(true)
-    const [position, setPosition] = useState(null)
-    const [radiusMiles, setRadiusMiles] = useState(3)
+    const [likedPlaces, setLikedPlaces] = useState({})
+    const [likeDeltas, setLikeDeltas] = useState({})
     const swiped = useRef(false)
 
     const CARD_HEIGHT = 844
@@ -48,6 +48,22 @@ export default function Feed() {
             setLoading(false)
         })
     }, [position, radiusMiles])
+
+    function handleToggleLike(placeId, nextLiked) {
+        setLikedPlaces(prev => ({ ...prev, [placeId]: nextLiked }))
+        setLikeDeltas(prev => ({
+            ...prev,
+            [placeId]: (prev[placeId] || 0) + (nextLiked ? 1 : -1)
+        }))
+        const action = nextLiked ? 'like' : 'unlike'
+        fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/like?placeId=${placeId}&action=${action}`, {
+            method: 'POST'
+        })
+    }
+
+    function displayedLikeCount(card) {
+        return (card.likeCount || 0) + (likeDeltas[card.placeId] || 0)
+    }
 
     const bind = useDrag(({ active, movement: [, my] }) => {
         if (swiped.current) return
@@ -115,13 +131,34 @@ export default function Feed() {
     return (
         <div className="feed" {...bind()} style={{ touchAction: 'none' }}>
             <animated.div className="feed-card" style={{ y: y.to(v => v - CARD_HEIGHT) }}>
-                <SwipeCard key={videoCards[prevIndex].video} card={videoCards[prevIndex]} active={false} />
+                <SwipeCard
+                    key={videoCards[prevIndex].video}
+                    card={videoCards[prevIndex]}
+                    active={false}
+                    liked={!!likedPlaces[videoCards[prevIndex].placeId]}
+                    likeCount={displayedLikeCount(videoCards[prevIndex])}
+                    onToggleLike={handleToggleLike}
+                />
             </animated.div>
             <animated.div className="feed-card" style={{ y }}>
-                <SwipeCard key={videoCards[currentIndex].video} card={videoCards[currentIndex]} active={true} />
+                <SwipeCard
+                    key={videoCards[currentIndex].video}
+                    card={videoCards[currentIndex]}
+                    active={true}
+                    liked={!!likedPlaces[videoCards[currentIndex].placeId]}
+                    likeCount={displayedLikeCount(videoCards[currentIndex])}
+                    onToggleLike={handleToggleLike}
+                />
             </animated.div>
             <animated.div className="feed-card" style={{ y: y.to(v => v + CARD_HEIGHT) }}>
-                <SwipeCard key={videoCards[nextIndex].video} card={videoCards[nextIndex]} active={false} />
+                <SwipeCard
+                    key={videoCards[nextIndex].video}
+                    card={videoCards[nextIndex]}
+                    active={false}
+                    liked={!!likedPlaces[videoCards[nextIndex].placeId]}
+                    likeCount={displayedLikeCount(videoCards[nextIndex])}
+                    onToggleLike={handleToggleLike}
+                />
             </animated.div>
             {rangeFilter}
         </div>

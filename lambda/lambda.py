@@ -5,6 +5,7 @@
 import boto3
 import json
 import urllib.request
+from botocore.exceptions import ClientError
 from decimal import Decimal
 
 HEADERS = {
@@ -103,11 +104,31 @@ def handler(event, context):
 
     elif path == '/like':
         placeId = params['placeId']
+        action = params.get('action', 'like')
+        if action == 'unlike':
+            print(f"[LIKE] Decrementing like for placeId={placeId}")
+            try:
+                table.update_item(
+                    Key={'placeId': placeId},
+                    UpdateExpression='SET likeCount = likeCount - :val',
+                    ConditionExpression='attribute_exists(likeCount) AND likeCount > :zero',
+                    ExpressionAttributeValues={':val': 1, ':zero': 0}
+                )
+            except ClientError as e:
+                if e.response['Error']['Code'] != 'ConditionalCheckFailedException':
+                    raise
+                print(f"[LIKE] Unlike skipped (likeCount already 0) for placeId={placeId}")
+            print(f"[LIKE] Unlike success for placeId={placeId}")
+            return {
+                'statusCode': 200,
+                'headers': HEADERS,
+                'body': json.dumps({'message': 'unlike recorded'})
+            }
         print(f"[LIKE] Incrementing like for placeId={placeId}")
         table.update_item(
             Key={'placeId': placeId},
-            UpdateExpression='SET likeCount = likeCount + :val',
-            ExpressionAttributeValues={':val': 1}
+            UpdateExpression='SET likeCount = if_not_exists(likeCount, :zero) + :val',
+            ExpressionAttributeValues={':val': 1, ':zero': 0}
         )
         print(f"[LIKE] Success for placeId={placeId}")
         return {
