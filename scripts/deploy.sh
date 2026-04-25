@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-trap 'echo ""; echo "DEPLOY FAILED at line $LINENO (exit code $?)"; exit 1' ERR
+trap 'status=$?; line=$LINENO; echo ""; echo "DEPLOY FAILED at line $line (exit code $status)"; exit $status' ERR
 
 echo "[ 1/10 ] Cognito"
 aws cloudformation deploy --no-fail-on-empty-changeset \
@@ -51,7 +51,13 @@ if [ -z "$DISTRIBUTION_ID" ] || [ "$DISTRIBUTION_ID" = "None" ]; then
     echo "Could not resolve CloudFront distribution ID from stack biteroll-cloudfront"
     exit 1
 fi
-aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
+INVALIDATION_ID=$(aws cloudfront create-invalidation \
+    --distribution-id "$DISTRIBUTION_ID" \
+    --paths "/*" \
+    --query "Invalidation.Id" \
+    --output text \
+    --no-cli-pager)
+echo "Created CloudFront invalidation $INVALIDATION_ID"
 
 echo "[ 7/10 ] DynamoDB"
 aws cloudformation deploy --no-fail-on-empty-changeset \
