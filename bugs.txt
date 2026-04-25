@@ -1,3 +1,2 @@
-- no change range filter button
 - cant unlike
 - likes are stored, but a like to one restaurant effects them all

@@ -4,6 +4,9 @@ import { useSpring, animated } from '@react-spring/web'
 import { useDrag } from '@use-gesture/react'
 import SwipeCard from '../components/SwipeCard.jsx'
 
+const RADIUS_OPTIONS_MILES = [1, 3, 5, 10, 100]
+const METERS_PER_MILE = 1609.344
+
 export default function Feed() {
 
     const [videoCards, setVideoCards] = useState([])
@@ -17,14 +20,17 @@ export default function Feed() {
     const [{ y }, api] = useSpring(() => ({ y: 0 }))
 
     useEffect(() => {
-        navigator.geolocation.getCurrentPosition(success, error)
+        navigator.geolocation.getCurrentPosition(
+            pos => setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            err => console.log(`ERROR: ${err}`)
+        )
     }, [])
 
-    function success(position) {
-        const lat = position.coords.latitude
-        const lng = position.coords.longitude
-
-        fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/feed?lat=${lat}&lng=${lng}`)
+    useEffect(() => {
+        if (!position) return
+        setLoading(true)
+        const radiusMeters = Math.round(radiusMiles * METERS_PER_MILE)
+        fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/feed?lat=${position.lat}&lng=${position.lng}&radius=${radiusMeters}`)
         .then(response => response.json())
         .then(data => {
             const cards = data.restaurants.flatMap(restaurant =>
@@ -38,13 +44,10 @@ export default function Feed() {
                 [cards[i], cards[j]] = [cards[j], cards[i]]
             }
             setVideoCards(cards)
+            setCurrentIndex(0)
             setLoading(false)
         })
-    }
-
-    function error(err) {
-        console.log(`ERROR: ${err}`)
-    }
+    }, [position, radiusMiles])
 
     function handleToggleLike(placeId, nextLiked) {
         setLikedPlaces(prev => ({ ...prev, [placeId]: nextLiked }))
@@ -90,9 +93,22 @@ export default function Feed() {
         }
     }, { axis: 'y' })
 
+    const rangeFilter = (
+        <select
+            className="range-filter"
+            value={radiusMiles}
+            onChange={e => setRadiusMiles(Number(e.target.value))}
+        >
+            {RADIUS_OPTIONS_MILES.map(mi => (
+                <option key={mi} value={mi}>{mi} mi</option>
+            ))}
+        </select>
+    )
+
     if (loading) {
         return (
             <div className="feed">
+                {rangeFilter}
                 <div className="loading-screen">
                     <div className="spinner"></div>
                     <p>Finding restaurants nearby...</p>
@@ -101,7 +117,13 @@ export default function Feed() {
         )
     }
 
-    if (videoCards.length === 0) return <div className="feed"></div>
+    if (videoCards.length === 0) {
+        return (
+            <div className="feed">
+                {rangeFilter}
+            </div>
+        )
+    }
 
     const prevIndex = (currentIndex - 1 + videoCards.length) % videoCards.length
     const nextIndex = (currentIndex + 1) % videoCards.length
@@ -138,6 +160,7 @@ export default function Feed() {
                     onToggleLike={handleToggleLike}
                 />
             </animated.div>
+            {rangeFilter}
         </div>
     )
 }
