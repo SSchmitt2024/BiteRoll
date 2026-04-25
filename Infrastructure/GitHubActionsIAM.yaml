@@ -1,0 +1,47 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'Permissions for the GitHub Actions user that deploys the BiteRoll frontend'
+
+Parameters:
+    GitHubActionsUserName:
+        Type: String
+        Default: biteroll-github-actions
+        Description: IAM user used by GitHub Actions repository secrets
+
+Resources:
+    GitHubActionsDeployPolicy:
+        Type: 'AWS::IAM::Policy'
+        Properties:
+            PolicyName: BiteRollGitHubActionsDeploy
+            Users:
+                - !Ref GitHubActionsUserName
+            PolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                    - Sid: ListWebsiteBucket
+                      Effect: Allow
+                      Action:
+                          - s3:ListBucket
+                      Resource: !Sub
+                          - 'arn:aws:s3:::${BucketName}'
+                          - BucketName: !ImportValue BucketName
+                    - Sid: WriteWebsiteObjects
+                      Effect: Allow
+                      Action:
+                          - s3:PutObject
+                          - s3:DeleteObject
+                          - s3:GetObject
+                      Resource: !Sub
+                          - 'arn:aws:s3:::${BucketName}/*'
+                          - BucketName: !ImportValue BucketName
+                    - Sid: ReadCloudFrontStack
+                      Effect: Allow
+                      Action:
+                          - cloudformation:DescribeStackResources
+                      Resource: '*'
+                    - Sid: InvalidateCloudFront
+                      Effect: Allow
+                      Action:
+                          - cloudfront:CreateInvalidation
+                      Resource: '*'
