@@ -38,10 +38,13 @@ export default function Feed() {
             setVideoCards(cards)
             setLoading(false)
         })
+        .catch(() => {
+            setLoading(false)
+        })
     }
 
-    function error(err) {
-        console.log(`ERROR: ${err}`)
+    function error() {
+        setLoading(false)
     }
 
     const bind = useDrag(({ active, movement: [, my] }) => {
@@ -83,7 +86,13 @@ export default function Feed() {
         )
     }
 
-    if (videoCards.length === 0) return <div className="feed"></div>
+    if (videoCards.length === 0) return (
+        <div className="feed">
+            <div className="loading-screen">
+                <p>No restaurants found. Please enable location access and refresh.</p>
+            </div>
+        </div>
+    )
 
     const prevIndex = (currentIndex - 1 + videoCards.length) % videoCards.length
     const nextIndex = (currentIndex + 1) % videoCards.length
@@ -91,13 +100,13 @@ export default function Feed() {
     return (
         <div className="feed" {...bind()} style={{ touchAction: 'none' }}>
             <animated.div className="feed-card" style={{ y: y.to(v => v - CARD_HEIGHT) }}>
-                <SwipeCard key={videoCards[prevIndex].video} card={videoCards[prevIndex]} active={false} />
+                <SwipeCard key={`prev-${prevIndex}`} card={videoCards[prevIndex]} active={false} />
             </animated.div>
             <animated.div className="feed-card" style={{ y }}>
-                <SwipeCard key={videoCards[currentIndex].video} card={videoCards[currentIndex]} active={true} />
+                <SwipeCard key={`current-${currentIndex}`} card={videoCards[currentIndex]} active={true} />
             </animated.div>
             <animated.div className="feed-card" style={{ y: y.to(v => v + CARD_HEIGHT) }}>
-                <SwipeCard key={videoCards[nextIndex].video} card={videoCards[nextIndex]} active={false} />
+                <SwipeCard key={`next-${nextIndex}`} card={videoCards[nextIndex]} active={false} />
             </animated.div>
         </div>
     )

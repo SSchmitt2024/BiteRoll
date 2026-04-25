@@ -21,7 +21,7 @@ npm run build
 aws cloudformation deploy \
     --template-file ../Infrastructure/S3-Static-Site.yaml \
     --stack-name biteroll-s3-static-site
-aws s3 sync dist s3://biteroll-static-site-sawyer/ --delete
+aws s3 sync dist s3://biteroll-static-site-sawyer/ --delete --exclude "lambda/*"
 
 aws cloudformation deploy \
     --template-file ../Infrastructure/S3-Media.yaml \
@@ -34,6 +34,11 @@ aws cloudformation deploy \
 aws cloudformation deploy \
     --template-file ../Infrastructure/CloudFront.yaml \
     --stack-name biteroll-cloudfront
+    
+DISTRIBUTION_ID=$(aws cloudformation list-exports \
+    --query "Exports[?Name=='CloudFrontDistributionId'].Value" --output text)
+aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
+
 
 aws cloudformation deploy \
     --template-file ../Infrastructure/DynamoDB.yaml \
