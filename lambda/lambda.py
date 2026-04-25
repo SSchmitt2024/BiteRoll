@@ -67,9 +67,9 @@ def handler(event, context):
         lat = params['lat']
         lng = params['lng']
         radius = float(params.get('radius', 5000))
-        radius = max(1.0, min(radius, 50000.0))
+        google_radius = max(1.0, min(radius, 50000.0))
         api_key = get_api_key()
-        place_ids = get_nearby_places(lat, lng, api_key, radius)
+        place_ids = get_nearby_places(lat, lng, api_key, google_radius)
         
         results = []
         found_ids = set()

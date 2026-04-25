@@ -52,6 +52,10 @@ aws cloudformation deploy \
     --template-file ../Infrastructure/Lambda.yaml \
     --stack-name biteroll-lambda \
     --capabilities CAPABILITY_IAM
+aws lambda update-function-code \
+    --function-name biteroll-api \
+    --s3-bucket biteroll-static-site-sawyer \
+    --s3-key lambda/lambda.zip
 
 aws cloudformation deploy \
     --template-file ../Infrastructure/APIGateway.yaml \
