@@ -17,9 +17,60 @@ export default function Feed() {
     const [likedPlaces, setLikedPlaces] = useState({})
     const [likeDeltas, setLikeDeltas] = useState({})
     const swiped = useRef(false)
+    const feedRef = useRef(null)
+    const cardHeight = useRef(window.innerHeight)
 
-    const CARD_HEIGHT = 844
     const [{ y }, api] = useSpring(() => ({ y: 0 }))
+
+    useEffect(() => {
+        const onResize = () => { cardHeight.current = window.innerHeight }
+        window.addEventListener('resize', onResize)
+        return () => window.removeEventListener('resize', onResize)
+    }, [])
+
+    function swipe(direction) {
+        if (swiped.current || videoCards.length === 0) return
+        swiped.current = true
+        const goUp = direction === 'up'
+        api.start({
+            y: goUp ? -cardHeight.current : cardHeight.current,
+            onRest: () => {
+                flushSync(() => {
+                    setCurrentIndex(prev => {
+                        const len = videoCards.length
+                        if (goUp) return (prev + 1) % len
+                        return (prev - 1 + len) % len
+                    })
+                })
+                api.set({ y: 0 })
+                swiped.current = false
+            }
+        })
+    }
+
+    useEffect(() => {
+        const el = feedRef.current
+        if (!el) return
+
+        const onWheel = (e) => {
+            e.preventDefault()
+            if (Math.abs(e.deltaY) > 30) {
+                swipe(e.deltaY > 0 ? 'up' : 'down')
+            }
+        }
+        const onKey = (e) => {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault()
+                swipe(e.key === 'ArrowUp' ? 'up' : 'down')
+            }
+        }
+        el.addEventListener('wheel', onWheel, { passive: false })
+        window.addEventListener('keydown', onKey)
+        return () => {
+            el.removeEventListener('wheel', onWheel)
+            window.removeEventListener('keydown', onKey)
+        }
+    }, [videoCards.length])
 
     useEffect(() => {
         navigator.geolocation.getCurrentPosition(
@@ -76,22 +127,7 @@ export default function Feed() {
             api.start({ y: my, immediate: true })
         } else {
             if (Math.abs(my) > 100) {
-                swiped.current = true
-                const goUp = my < 0
-                api.start({
-                    y: goUp ? -CARD_HEIGHT : CARD_HEIGHT,
-                    onRest: () => {
-                        flushSync(() => {
-                            setCurrentIndex(prev => {
-                                const len = videoCards.length
-                                if (goUp) return (prev + 1) % len
-                                return (prev - 1 + len) % len
-                            })
-                        })
-                        api.set({ y: 0 })
-                        swiped.current = false
-                    }
-                })
+                swipe(my < 0 ? 'up' : 'down')
             } else {
                 api.start({ y: 0 })
             }
@@ -137,8 +173,8 @@ export default function Feed() {
     const nextIndex = (currentIndex + 1) % videoCards.length
 
     return (
-        <div className="feed" {...bind()} style={{ touchAction: 'none' }}>
-            <animated.div className="feed-card" style={{ y: y.to(v => v - CARD_HEIGHT) }}>
+        <div className="feed" ref={feedRef} {...bind()} style={{ touchAction: 'none' }} tabIndex={-1}>
+            <animated.div className="feed-card" style={{ y: y.to(v => v - cardHeight.current) }}>
                 <SwipeCard
                     key={`prev-${prevIndex}`}
                     card={videoCards[prevIndex]}
@@ -158,7 +194,7 @@ export default function Feed() {
                     onToggleLike={handleToggleLike}
                 />
             </animated.div>
-            <animated.div className="feed-card" style={{ y: y.to(v => v + CARD_HEIGHT) }}>
+            <animated.div className="feed-card" style={{ y: y.to(v => v + cardHeight.current) }}>
                 <SwipeCard
                     key={`next-${nextIndex}`}
                     card={videoCards[nextIndex]}

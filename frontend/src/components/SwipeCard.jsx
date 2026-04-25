@@ -66,7 +66,7 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
                                         <div key={item.name} className="menu-item">
                                             <div className="menu-item-top">
                                                 <span>{item.name}</span>
-                                                <span>${item.price.toFixed(2)}</span>
+                                                {item.price != null && <span>${item.price.toFixed(2)}</span>}
                                             </div>
                                             {item.description && <p>{item.description}</p>}
                                         </div>
