@@ -35,8 +35,9 @@ aws cloudformation deploy \
     --template-file ../Infrastructure/CloudFront.yaml \
     --stack-name biteroll-cloudfront
     
-DISTRIBUTION_ID=$(aws cloudformation list-exports \
+DISTRIBUTION_ARN=$(aws cloudformation list-exports \
     --query "Exports[?Name=='CloudFrontDistributionId'].Value" --output text)
+DISTRIBUTION_ID=${DISTRIBUTION_ARN##*/}
 aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
 
 
