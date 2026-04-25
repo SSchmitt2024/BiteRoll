@@ -48,29 +48,38 @@ export default function Login() {
     }
 
     return (
-        <div className="login-outer-box">
-            <div className="login-inner-box">
-                <div className="login-cleft">
-                    Banner will go here
+        <div className="auth-outer">
+            <div className="auth-card">
+                <div className="auth-banner">
+                    <div className="auth-brand">BiteRoll</div>
+                    <p className="auth-tagline">Swipe through nearby bites.</p>
                 </div>
-                <div>
-                    <form onSubmit={handleSubmit} className="login-form">
-                        <label>Enter Your Email
+                <div className="auth-pane">
+                    <form onSubmit={handleSubmit} className="auth-form">
+                        <h1 className="auth-title">Welcome back</h1>
+                        <p className="auth-subtitle">Sign in to keep rolling.</p>
+                        <label className="auth-field">
+                            <span>Email</span>
                             <input
-                                type="text"
+                                type="email"
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
-                                />
+                                placeholder="you@example.com"
+                                autoComplete="email"
+                            />
                         </label>
-                        <label>Enter Your Password
+                        <label className="auth-field">
+                            <span>Password</span>
                             <input
                                 type="password"
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
-                                />
+                                placeholder="••••••••"
+                                autoComplete="current-password"
+                            />
                         </label>
-                        <button type="submit">Submit</button>
-                        <Link to="/signup">Don't have an account? Sign up</Link>
+                        <button type="submit" className="auth-submit">Sign in</button>
+                        <Link to="/signup" className="auth-link">Don't have an account? Sign up</Link>
                     </form>
                 </div>
             </div>
