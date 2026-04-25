@@ -1,9 +1,7 @@
-import { useState, useRef, useEffect } from 'react'
+import { useRef, useEffect } from 'react'
 import '../../index.css'
 
-export default function SwipeCard({ card, active }) {
-    const [likes, updateLikes] = useState(card.likeCount)
-    const [liked, setLiked] = useState(false)
+export default function SwipeCard({ card, active, liked, likeCount, onToggleLike }) {
     const videoRef = useRef(null)
 
     useEffect(() => {
@@ -15,13 +13,7 @@ export default function SwipeCard({ card, active }) {
     }, [active])
 
     function handleLike() {
-        if (!liked) {
-            fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/like?placeId=${card.placeId}`, {
-                method: 'POST'
-            })
-            updateLikes(likes + 1)
-            setLiked(true)
-        }
+        onToggleLike(card.placeId, !liked)
     }
 
     return (
@@ -36,7 +28,7 @@ export default function SwipeCard({ card, active }) {
             />
             <div className="card-overlay">
                 <h2>{card.name}</h2>
-                <button onClick={handleLike}>{liked ? '❤️' : '🤍'} {likes}</button>
+                <button onClick={handleLike}>{liked ? '❤️' : '🤍'} {likeCount}</button>
                 <button>📋 Menu</button>
             </div>
         </div>
