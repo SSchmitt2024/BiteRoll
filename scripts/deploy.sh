@@ -4,7 +4,7 @@ set -e
 trap 'echo ""; echo "DEPLOY FAILED at line $LINENO (exit code $?)"; exit 1' ERR
 
 echo "[ 1/10 ] Cognito"
-aws cloudformation deploy \
+aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/Cognito.yaml \
     --stack-name biteroll-cognito
 
@@ -22,33 +22,39 @@ npm ci
 npm run build
 
 echo "[ 3/10 ] S3 Static Site"
-aws cloudformation deploy \
+aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/S3-Static-Site.yaml \
     --stack-name biteroll-s3-static-site
 aws s3 sync dist s3://biteroll-static-site-sawyer/ --delete --exclude "lambda/*"
 
 echo "[ 4/10 ] S3 Media"
-aws cloudformation deploy \
+aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/S3-Media.yaml \
     --stack-name biteroll-s3-media
 
-echo "[ 5/10 ] Bucket Policy"
-aws cloudformation deploy \
-    --template-file ../Infrastructure/BucketPolicy.yaml \
-    --stack-name biteroll-s3-policy
-
-echo "[ 6/10 ] CloudFront"
-aws cloudformation deploy \
+echo "[ 5/10 ] CloudFront"
+aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/CloudFront.yaml \
     --stack-name biteroll-cloudfront
 
-DISTRIBUTION_ARN=$(aws cloudformation list-exports \
-    --query "Exports[?Name=='CloudFrontDistributionId'].Value" --output text)
-DISTRIBUTION_ID=${DISTRIBUTION_ARN##*/}
-aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
+echo "[ 6/10 ] Bucket Policy"
+aws cloudformation deploy --no-fail-on-empty-changeset \
+    --template-file ../Infrastructure/BucketPolicy.yaml \
+    --stack-name biteroll-s3-policy
+
+DISTRIBUTION_ID=$(aws cloudformation describe-stack-resources \
+    --stack-name biteroll-cloudfront \
+    --logical-resource-id BiteRollCloudFront \
+    --query "StackResources[0].PhysicalResourceId" \
+    --output text)
+if [ -z "$DISTRIBUTION_ID" ] || [ "$DISTRIBUTION_ID" = "None" ]; then
+    echo "Could not resolve CloudFront distribution ID from stack biteroll-cloudfront"
+    exit 1
+fi
+aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
 
 echo "[ 7/10 ] DynamoDB"
-aws cloudformation deploy \
+aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/DynamoDB.yaml \
     --stack-name biteroll-DynamoDB
 
@@ -56,7 +62,7 @@ echo "[ 8/10 ] Lambda"
 cd ../lambda
 zip lambda.zip lambda.py
 aws s3 cp lambda.zip s3://biteroll-static-site-sawyer/lambda/lambda.zip
-aws cloudformation deploy \
+aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/Lambda.yaml \
     --stack-name biteroll-lambda \
     --capabilities CAPABILITY_IAM
@@ -66,12 +72,12 @@ aws lambda update-function-code \
     --s3-key lambda/lambda.zip
 
 echo "[ 9/10 ] API Gateway"
-aws cloudformation deploy \
+aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/APIGateway.yaml \
     --stack-name biteroll-api-gateway
 
 echo "[ 10/10 ] SNS"
-aws cloudformation deploy \
+aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/SNSTopic.yaml \
     --stack-name biteroll-sns-topic \
     --parameter-overrides AlertEmail=sawyerals.nh@gmail.com

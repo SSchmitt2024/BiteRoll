@@ -8,7 +8,7 @@ echo -e "=========================\n"
 aws resourcegroupstaggingapi get-resources --tag-filters \
     Key=Project,Values=BiteRoll \
     --query 'ResourceTagMappingList[*].{ARN:ResourceARN}' \
-    --output table \
+    --output table
 
 declare -A resources
 
@@ -18,10 +18,20 @@ S3_Status=$?
 resources["S3"]=$S3_Status
 
 echo -e "\n[ === CloudFront Status === ]"
-aws cloudfront get-distribution --id E3A0HS1T7YS44D \
-    --query 'Distribution.{Status:Status,Domain:DomainName}' \
-    --output table
-CF_Status=$?
+CF_DISTRIBUTION_ID=$(aws cloudformation describe-stack-resources \
+    --stack-name biteroll-cloudfront \
+    --logical-resource-id BiteRollCloudFront \
+    --query "StackResources[0].PhysicalResourceId" \
+    --output text)
+if [ -z "$CF_DISTRIBUTION_ID" ] || [ "$CF_DISTRIBUTION_ID" = "None" ]; then
+    echo "Could not resolve CloudFront distribution ID from stack biteroll-cloudfront"
+    CF_Status=1
+else
+    aws cloudfront get-distribution --id "$CF_DISTRIBUTION_ID" \
+        --query 'Distribution.{Status:Status,Domain:DomainName}' \
+        --output table
+    CF_Status=$?
+fi
 resources["CloudFront"]=$CF_Status
 
 echo -e "\n[ ===== Cognito Status ===== ]"
@@ -34,7 +44,7 @@ resources["Cognito"]=$COG_Status
 
 echo -e "\n[ ===== Lambda Status ===== ]"
 aws cloudformation describe-stacks \
-    --stack-name biteroll-Lambda \
+    --stack-name biteroll-lambda \
     --query 'Stacks[0].StackStatus' \
     --output text
 LAMBDA_Status=$?
@@ -76,4 +86,3 @@ if [ $issues -eq 1 ]; then
 else
     echo -e "\nResources fully up and running.\n"
 fi
-
