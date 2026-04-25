@@ -66,6 +66,45 @@
     gap: 10px;
 }
 
+.menu-overlay {
+    position: absolute;
+    inset: 0;
+    background: #111;
+    display: flex;
+    flex-direction: column;
+    z-index: 20;
+}
+
+.menu-frame {
+    flex: 1;
+    width: 100%;
+    border: 0;
+    background: white;
+}
+
+.menu-status {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    gap: 12px;
+}
+
+.menu-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 21;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(0,0,0,0.6);
+    color: white;
+    font-size: 1rem;
+    line-height: 1;
 .range-filter {
     position: absolute;
     top: 16px;
