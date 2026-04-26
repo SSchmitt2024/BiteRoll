@@ -42,7 +42,10 @@ export default function Confirm() {
         <div className="auth-outer">
             <div className="auth-card">
                 <div className="auth-banner">
-                    <div className="auth-brand">BiteRoll</div>
+                    <div className="auth-brand-lockup">
+                        <img src="/logo.png" alt="BiteRoll logo" className="auth-logo" />
+                        <div className="auth-brand">BiteRoll</div>
+                    </div>
                     <p className="auth-tagline">Almost there.</p>
                 </div>
                 <div className="auth-pane">

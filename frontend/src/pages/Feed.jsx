@@ -55,7 +55,7 @@ function BrandSide() {
 function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlaces,
     likeDeltas, handleToggleLike, radiusMiles, setRadiusMiles, setLoading }) {
 
-    const [cardHeight, setCardHeight] = useState(874)
+    const cardHeight = 874
     const swiped = useRef(false)
     const feedRef = useRef(null)
     const [{ y }, api] = useSpring(() => ({ y: 0 }))
@@ -135,9 +135,16 @@ function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlac
         </select>
     )
 
+    const feedBrand = (
+        <div className="feed-brand" aria-label="BiteRoll">
+            <img src="/logo.png" alt="" />
+        </div>
+    )
+
     if (loading) {
         return (
             <div className="feed-inner">
+                {feedBrand}
                 {rangeFilter}
                 <div className="loading-screen">
                     <div className="loading-brand">BiteRoll</div>
@@ -154,6 +161,7 @@ function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlac
 
     return (
         <div className="feed-inner" ref={feedRef} {...bind()} style={{ touchAction: 'none' }} tabIndex={-1}>
+            {feedBrand}
             <AnimatedFeedCard className="feed-card" style={{ y: y.to(v => v - cardHeight) }}>
                 <SwipeCard
                     key={`prev-${prevIndex}`}

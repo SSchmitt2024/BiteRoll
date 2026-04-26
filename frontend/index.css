@@ -171,6 +171,31 @@ html, body {
 }
 
 /* ── Loading screen ──────────────────────────────────────── */
+.feed-brand {
+    position: absolute;
+    top: 52px;
+    left: 14px;
+    z-index: 10;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.22);
+    background: rgba(0,0,0,0.34);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    pointer-events: none;
+}
+
+.feed-brand img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    display: block;
+}
+
 .loading-screen {
     display: flex;
     flex-direction: column;
@@ -652,6 +677,23 @@ html, body {
     min-height: 240px;
 }
 
+.auth-brand-lockup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.auth-logo {
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+    display: block;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.16);
+    padding: 6px;
+}
+
 .auth-brand {
     font-size: 2rem;
     font-weight: 700;
@@ -773,6 +815,10 @@ html, body {
     .auth-banner {
         min-height: 160px;
         padding: 28px 24px;
+    }
+    .auth-logo {
+        width: 48px;
+        height: 48px;
     }
     .auth-pane {
         padding: 28px 24px;

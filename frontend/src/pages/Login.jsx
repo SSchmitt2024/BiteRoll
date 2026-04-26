@@ -57,7 +57,10 @@ export default function Login() {
         <div className="auth-outer">
             <div className="auth-card">
                 <div className="auth-banner">
-                    <div className="auth-brand">BiteRoll</div>
+                    <div className="auth-brand-lockup">
+                        <img src="/logo.png" alt="BiteRoll logo" className="auth-logo" />
+                        <div className="auth-brand">BiteRoll</div>
+                    </div>
                     <p className="auth-tagline">Swipe through nearby bites.</p>
                 </div>
                 <div className="auth-pane">
