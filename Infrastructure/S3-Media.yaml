@@ -47,6 +47,16 @@ Resources:
                 BlockPublicPolicy: true
                 IgnorePublicAcls: true
                 RestrictPublicBuckets: true
+            CorsConfiguration:
+                CorsRules:
+                  - AllowedOrigins:
+                      - 'https://app.sawyerschmitt.dev'
+                    AllowedMethods:
+                      - GET
+                      - HEAD
+                    AllowedHeaders:
+                      - '*'
+                    MaxAge: 3000
             VersioningConfiguration:
                 Status: Enabled
             ReplicationConfiguration:
