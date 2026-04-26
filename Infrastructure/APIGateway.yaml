@@ -169,7 +169,7 @@ Resources:
                       method.response.header.Access-Control-Allow-Methods: true
                       method.response.header.Access-Control-Allow-Origin: true
 
-    Deployment:
+    DeploymentAuthCors20260426:
         Type: AWS::ApiGateway::Deployment
         Properties:
             RestApiId: !Ref API
@@ -184,7 +184,7 @@ Resources:
         Type: AWS::ApiGateway::Stage
         Properties:
             RestApiId: !Ref API
-            DeploymentId: !Ref Deployment
+            DeploymentId: !Ref DeploymentAuthCors20260426
             StageName: prod
     LambdaPermission:
         Type: AWS::Lambda::Permission
