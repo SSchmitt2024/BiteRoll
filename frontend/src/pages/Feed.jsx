@@ -144,7 +144,7 @@ function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlac
 
     const feedBrand = (
         <div className="feed-brand" aria-label="BiteRoll">
-            <img src="/logo.png" alt="" />
+            <img src="/logo2.png" alt="" />
         </div>
     )
 
