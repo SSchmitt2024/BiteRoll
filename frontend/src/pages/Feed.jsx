@@ -10,6 +10,15 @@ const RADIUS_OPTIONS_MILES = [1, 3, 5, 10, 100]
 const METERS_PER_MILE = 1609.344
 const AnimatedFeedCard = animated.div
 
+const FALLBACK_CARD = {
+    placeId: '__fallback__',
+    name: 'No restaurants found',
+    video: '',
+    likeCount: 0,
+    videos: [],
+    _isFallback: true,
+}
+
 export default function Feed() {
 
     const [videoCards, setVideoCards] = useState([])
@@ -32,7 +41,7 @@ export default function Feed() {
     }, [])
 
     const swipe = useCallback((direction) => {
-        if (swiped.current || videoCards.length === 0) return
+        if (swiped.current || videoCards.length <= 1) return
         const currentCard = videoCards[currentIndex]
         logInfo('feed_swipe_started', { direction, placeId: currentCard?.placeId })
         swiped.current = true
@@ -128,6 +137,7 @@ export default function Feed() {
     }, [position, radiusMiles])
 
     function handleToggleLike(placeId, nextLiked) {
+        if (placeId === '__fallback__') return
         const action = nextLiked ? 'like' : 'unlike'
         logInfo('like_request_started', { placeId, action })
         setLikedPlaces(prev => ({ ...prev, [placeId]: nextLiked }))
@@ -186,56 +196,47 @@ export default function Feed() {
             <div className="feed">
                 {rangeFilter}
                 <div className="loading-screen">
-                    <div className="spinner"></div>
-                    <p>Finding restaurants nearby...</p>
+                    <div className="loading-brand">BiteRoll</div>
+                    <div className="spinner" />
+                    <p className="loading-text">Finding restaurants nearby...</p>
                 </div>
             </div>
         )
     }
 
-    if (videoCards.length === 0) {
-        return (
-            <div className="feed">
-                {rangeFilter}
-                <div className="loading-screen">
-                    <p>No restaurants found. Please enable location access and refresh.</p>
-                </div>
-            </div>
-        )
-    }
-
-    const prevIndex = (currentIndex - 1 + videoCards.length) % videoCards.length
-    const nextIndex = (currentIndex + 1) % videoCards.length
+    const cards = videoCards.length > 0 ? videoCards : [FALLBACK_CARD]
+    const prevIndex = (currentIndex - 1 + cards.length) % cards.length
+    const nextIndex = (currentIndex + 1) % cards.length
 
     return (
         <div className="feed" ref={feedRef} {...bind()} style={{ touchAction: 'none' }} tabIndex={-1}>
             <AnimatedFeedCard className="feed-card" style={{ y: y.to(v => v - cardHeight) }}>
                 <SwipeCard
                     key={`prev-${prevIndex}`}
-                    card={videoCards[prevIndex]}
+                    card={cards[prevIndex]}
                     active={false}
-                    liked={!!likedPlaces[videoCards[prevIndex].placeId]}
-                    likeCount={displayedLikeCount(videoCards[prevIndex])}
+                    liked={!!likedPlaces[cards[prevIndex].placeId]}
+                    likeCount={displayedLikeCount(cards[prevIndex])}
                     onToggleLike={handleToggleLike}
                 />
             </AnimatedFeedCard>
             <AnimatedFeedCard className="feed-card" style={{ y }}>
                 <SwipeCard
                     key={`current-${currentIndex}`}
-                    card={videoCards[currentIndex]}
+                    card={cards[currentIndex]}
                     active={true}
-                    liked={!!likedPlaces[videoCards[currentIndex].placeId]}
-                    likeCount={displayedLikeCount(videoCards[currentIndex])}
+                    liked={!!likedPlaces[cards[currentIndex].placeId]}
+                    likeCount={displayedLikeCount(cards[currentIndex])}
                     onToggleLike={handleToggleLike}
                 />
             </AnimatedFeedCard>
             <AnimatedFeedCard className="feed-card" style={{ y: y.to(v => v + cardHeight) }}>
                 <SwipeCard
                     key={`next-${nextIndex}`}
-                    card={videoCards[nextIndex]}
+                    card={cards[nextIndex]}
                     active={false}
-                    liked={!!likedPlaces[videoCards[nextIndex].placeId]}
-                    likeCount={displayedLikeCount(videoCards[nextIndex])}
+                    liked={!!likedPlaces[cards[nextIndex].placeId]}
+                    likeCount={displayedLikeCount(cards[nextIndex])}
                     onToggleLike={handleToggleLike}
                 />
             </AnimatedFeedCard>

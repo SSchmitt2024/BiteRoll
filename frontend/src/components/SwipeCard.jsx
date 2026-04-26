@@ -1,14 +1,18 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import '../../index.css'
 import { logError, logInfo, logWarn } from '../utils/logger.js'
 import { authHeaders } from '../utils/apiAuth.js'
+import { HeartIcon, MenuIcon, CloseIcon } from './Icons.jsx'
 
 export default function SwipeCard({ card, active, liked, likeCount, onToggleLike }) {
+    const isFallback = card._isFallback
     const [menu, setMenu] = useState(null)
     const [menuOpen, setMenuOpen] = useState(false)
     const [menuLoading, setMenuLoading] = useState(false)
     const [menuError, setMenuError] = useState('')
+    const [pops, setPops] = useState([])
     const videoRef = useRef(null)
+    const lastTap = useRef(0)
 
     useEffect(() => {
         if (active && !menuOpen) {
@@ -19,6 +23,20 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
             videoRef.current?.pause()
         }
     }, [active, card.placeId, menuOpen])
+
+    const handleDoubleTap = useCallback((e) => {
+        const now = Date.now()
+        if (now - lastTap.current < 300) {
+            const rect = e.currentTarget.getBoundingClientRect()
+            const x = e.clientX - rect.left
+            const y = e.clientY - rect.top
+            const id = now
+            setPops(prev => [...prev, { x, y, id }])
+            setTimeout(() => setPops(prev => prev.filter(p => p.id !== id)), 900)
+            if (!liked) onToggleLike(card.placeId, true)
+        }
+        lastTap.current = now
+    }, [liked, card.placeId, onToggleLike])
 
     async function handleMenu(e) {
         e.stopPropagation()
@@ -61,7 +79,7 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
     }
 
     return (
-        <div className="swipe-card">
+        <div className="swipe-card" onClick={handleDoubleTap}>
             <video
                 ref={videoRef}
                 src={card.video}
@@ -70,38 +88,95 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
                 playsInline
                 preload="auto"
             />
-            <div className="card-overlay" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
-                <h2>{card.name}</h2>
-                <button onClick={handleLike}>{liked ? 'Liked' : 'Like'} {likeCount}</button>
-                <button onClick={handleMenu}>Menu</button>
-            </div>
+
+            <div className="card-vignette" />
+
+            {!isFallback && (
+                <div className="restaurant-pill">
+                    <span className="pill-initial">{card.name?.[0] || 'B'}</span>
+                    <span className="pill-name">{card.name}</span>
+                </div>
+            )}
+
+            {!isFallback && (
+                <div className="side-rail" onPointerDown={e => e.stopPropagation()}>
+                    <button className="rail-btn" onClick={handleLike}>
+                        <HeartIcon size={44} filled={liked} />
+                        <span className="rail-label">{likeCount}</span>
+                    </button>
+                    <button className="rail-btn rail-btn-highlight" onClick={handleMenu}>
+                        <MenuIcon size={44} />
+                        <span className="rail-label">Menu</span>
+                    </button>
+                </div>
+            )}
+
+            {pops.map(p => (
+                <div key={p.id} className="heart-pop"
+                    style={{ left: p.x - 60, top: p.y - 60 }}>
+                    <HeartIcon size={120} filled />
+                </div>
+            ))}
+
             {menuOpen && (
-                <div className="menu-popup" onClick={() => setMenuOpen(false)}>
-                    <div className="menu-popup-content" onClick={e => e.stopPropagation()}>
-                        <div className="menu-popup-header">
-                            <h2>{menu?.restaurant || card.name}</h2>
-                            <button onClick={() => setMenuOpen(false)}>Close</button>
+                <>
+                    <div className="menu-backdrop"
+                        onClick={() => setMenuOpen(false)}
+                        style={{ opacity: 1 }} />
+                    <div className="menu-sheet" onClick={e => e.stopPropagation()}>
+                        <div className="menu-handle" />
+                        <div className="menu-header">
+                            <div className="menu-restaurant-icon">
+                                {(menu?.restaurant || card.name)?.[0] || 'B'}
+                            </div>
+                            <div className="menu-restaurant-info">
+                                <div className="menu-restaurant-name">
+                                    {menu?.restaurant || card.name}
+                                </div>
+                            </div>
+                            <button className="menu-close-btn" onClick={() => setMenuOpen(false)}>
+                                <CloseIcon size={18} color="#1F2330" />
+                            </button>
                         </div>
-                        <div className="menu-popup-body">
-                            {menuLoading && <p className="menu-message">Loading menu...</p>}
-                            {menuError && <p className="menu-message">{menuError}</p>}
+                        <div className="menu-title-row">
+                            <span className="menu-title">Menu</span>
+                        </div>
+                        <div className="menu-items-scroll">
+                            {menuLoading && (
+                                <div className="menu-status">
+                                    <div className="spinner spinner-sm" />
+                                    <p>Loading menu...</p>
+                                </div>
+                            )}
+                            {menuError && (
+                                <div className="menu-status">
+                                    <p>{menuError}</p>
+                                </div>
+                            )}
                             {menu?.sections?.map(section => (
                                 <div key={section.name} className="menu-section">
-                                    <h3>{section.name}</h3>
-                                    {section.items.map(item => (
-                                        <div key={item.name} className="menu-item">
-                                            <div className="menu-item-top">
-                                                <span>{item.name}</span>
-                                                {item.price != null && <span>${item.price.toFixed(2)}</span>}
+                                    <h3 className="menu-section-title">{section.name}</h3>
+                                    {section.items.map((item, i) => (
+                                        <div key={item.name} className="menu-item"
+                                            style={{ borderBottom: i < section.items.length - 1 ? '1px solid rgba(31,35,48,0.08)' : 'none' }}>
+                                            <div className="menu-item-info">
+                                                <div className="menu-item-name">{item.name}</div>
+                                                {item.description && (
+                                                    <p className="menu-item-desc">{item.description}</p>
+                                                )}
                                             </div>
-                                            {item.description && <p>{item.description}</p>}
+                                            {item.price != null && (
+                                                <div className="menu-item-price">
+                                                    ${item.price.toFixed(2)}
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
                             ))}
                         </div>
                     </div>
-                </div>
+                </>
             )}
         </div>
     )
