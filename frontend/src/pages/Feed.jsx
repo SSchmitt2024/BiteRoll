@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 import { useSpring, animated } from '@react-spring/web'
 import { useDrag } from '@use-gesture/react'
 import SwipeCard from '../components/SwipeCard.jsx'
+import PhoneFrame from '../components/PhoneFrame.jsx'
 import { logError, logInfo, logWarn } from '../utils/logger.js'
 import { authHeaders } from '../utils/apiAuth.js'
 
@@ -19,26 +20,49 @@ const FALLBACK_CARD = {
     _isFallback: true,
 }
 
-export default function Feed() {
+function BrandSide() {
+    return (
+        <aside className="brand-side">
+            <div className="brand-meta">
+                <span className="brand-meta-pip">B</span>
+                BiteRoll · iOS prototype
+            </div>
+            <h1 className="brand-wordmark">
+                Bite<span className="brand-roll">Roll</span>
+                <span className="brand-dot" />
+            </h1>
+            <p className="brand-tagline">
+                Matching your hunger to your next favorite restaurant — one swipe at a time.
+            </p>
+            <div className="brand-features">
+                <div className="brand-feature">
+                    <span className="brand-feature-num">01</span>
+                    <span><b>Swipe up</b> to roll through dishes from spots near you.</span>
+                </div>
+                <div className="brand-feature">
+                    <span className="brand-feature-num">02</span>
+                    <span><b>Double-tap</b> or hit the heart to save a craving.</span>
+                </div>
+                <div className="brand-feature">
+                    <span className="brand-feature-num">03</span>
+                    <span><b>Tap the menu</b> button to see the full restaurant lineup.</span>
+                </div>
+            </div>
+        </aside>
+    )
+}
 
-    const [videoCards, setVideoCards] = useState([])
-    const [currentIndex, setCurrentIndex] = useState(0)
-    const [loading, setLoading] = useState(true)
-    const [position, setPosition] = useState(null)
-    const [radiusMiles, setRadiusMiles] = useState(5)
-    const [likedPlaces, setLikedPlaces] = useState({})
-    const [likeDeltas, setLikeDeltas] = useState({})
-    const [cardHeight, setCardHeight] = useState(window.innerHeight)
+function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlaces,
+    likeDeltas, handleToggleLike, radiusMiles, setRadiusMiles, setLoading }) {
+
+    const [cardHeight, setCardHeight] = useState(874)
     const swiped = useRef(false)
     const feedRef = useRef(null)
-
     const [{ y }, api] = useSpring(() => ({ y: 0 }))
 
-    useEffect(() => {
-        const onResize = () => { setCardHeight(window.innerHeight) }
-        window.addEventListener('resize', onResize)
-        return () => window.removeEventListener('resize', onResize)
-    }, [])
+    function displayedLikeCount(card) {
+        return (card.likeCount || 0) + (likeDeltas[card.placeId] || 0)
+    }
 
     const swipe = useCallback((direction) => {
         if (swiped.current || videoCards.length <= 1) return
@@ -60,17 +84,14 @@ export default function Feed() {
                 swiped.current = false
             }
         })
-    }, [api, cardHeight, currentIndex, videoCards])
+    }, [api, cardHeight, currentIndex, videoCards, setCurrentIndex])
 
     useEffect(() => {
         const el = feedRef.current
         if (!el) return
-
         const onWheel = (e) => {
             e.preventDefault()
-            if (Math.abs(e.deltaY) > 30) {
-                swipe(e.deltaY > 0 ? 'up' : 'down')
-            }
+            if (Math.abs(e.deltaY) > 30) swipe(e.deltaY > 0 ? 'up' : 'down')
         }
         const onKey = (e) => {
             if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -85,6 +106,97 @@ export default function Feed() {
             window.removeEventListener('keydown', onKey)
         }
     }, [swipe])
+
+    const bind = useDrag(({ active, movement: [, my] }) => {
+        if (swiped.current) return
+        if (active) {
+            api.start({ y: my, immediate: true })
+        } else {
+            if (Math.abs(my) > 100) {
+                swipe(my < 0 ? 'up' : 'down')
+            } else {
+                api.start({ y: 0 })
+            }
+        }
+    }, { axis: 'y' })
+
+    const rangeFilter = (
+        <select
+            className="range-filter"
+            value={radiusMiles}
+            onChange={e => {
+                setLoading(true)
+                setRadiusMiles(Number(e.target.value))
+            }}
+        >
+            {RADIUS_OPTIONS_MILES.map(mi => (
+                <option key={mi} value={mi}>{mi} mi</option>
+            ))}
+        </select>
+    )
+
+    if (loading) {
+        return (
+            <div className="feed-inner">
+                {rangeFilter}
+                <div className="loading-screen">
+                    <div className="loading-brand">BiteRoll</div>
+                    <div className="spinner" />
+                    <p className="loading-text">Finding restaurants nearby...</p>
+                </div>
+            </div>
+        )
+    }
+
+    const cards = videoCards.length > 0 ? videoCards : [FALLBACK_CARD]
+    const prevIndex = (currentIndex - 1 + cards.length) % cards.length
+    const nextIndex = (currentIndex + 1) % cards.length
+
+    return (
+        <div className="feed-inner" ref={feedRef} {...bind()} style={{ touchAction: 'none' }} tabIndex={-1}>
+            <AnimatedFeedCard className="feed-card" style={{ y: y.to(v => v - cardHeight) }}>
+                <SwipeCard
+                    key={`prev-${prevIndex}`}
+                    card={cards[prevIndex]}
+                    active={false}
+                    liked={!!likedPlaces[cards[prevIndex].placeId]}
+                    likeCount={displayedLikeCount(cards[prevIndex])}
+                    onToggleLike={handleToggleLike}
+                />
+            </AnimatedFeedCard>
+            <AnimatedFeedCard className="feed-card" style={{ y }}>
+                <SwipeCard
+                    key={`current-${currentIndex}`}
+                    card={cards[currentIndex]}
+                    active={true}
+                    liked={!!likedPlaces[cards[currentIndex].placeId]}
+                    likeCount={displayedLikeCount(cards[currentIndex])}
+                    onToggleLike={handleToggleLike}
+                />
+            </AnimatedFeedCard>
+            <AnimatedFeedCard className="feed-card" style={{ y: y.to(v => v + cardHeight) }}>
+                <SwipeCard
+                    key={`next-${nextIndex}`}
+                    card={cards[nextIndex]}
+                    active={false}
+                    liked={!!likedPlaces[cards[nextIndex].placeId]}
+                    likeCount={displayedLikeCount(cards[nextIndex])}
+                    onToggleLike={handleToggleLike}
+                />
+            </AnimatedFeedCard>
+            {rangeFilter}
+        </div>
+    )
+}
+
+export default function Feed() {
+    const [videoCards, setVideoCards] = useState([])
+    const [currentIndex, setCurrentIndex] = useState(0)
+    const [loading, setLoading] = useState(true)
+    const [position, setPosition] = useState(null)
+    const [radiusMiles, setRadiusMiles] = useState(5)
+    const [likedPlaces, setLikedPlaces] = useState({})
+    const [likeDeltas, setLikeDeltas] = useState({})
 
     useEffect(() => {
         logInfo('geolocation_request_started')
@@ -159,88 +271,27 @@ export default function Feed() {
         })
     }
 
-    function displayedLikeCount(card) {
-        return (card.likeCount || 0) + (likeDeltas[card.placeId] || 0)
-    }
-
-    const bind = useDrag(({ active, movement: [, my] }) => {
-        if (swiped.current) return
-        if (active) {
-            api.start({ y: my, immediate: true })
-        } else {
-            if (Math.abs(my) > 100) {
-                swipe(my < 0 ? 'up' : 'down')
-            } else {
-                api.start({ y: 0 })
-            }
-        }
-    }, { axis: 'y' })
-
-    const rangeFilter = (
-        <select
-            className="range-filter"
-            value={radiusMiles}
-            onChange={e => {
-                setLoading(true)
-                setRadiusMiles(Number(e.target.value))
-            }}
-        >
-            {RADIUS_OPTIONS_MILES.map(mi => (
-                <option key={mi} value={mi}>{mi} mi</option>
-            ))}
-        </select>
-    )
-
-    if (loading) {
-        return (
-            <div className="feed">
-                {rangeFilter}
-                <div className="loading-screen">
-                    <div className="loading-brand">BiteRoll</div>
-                    <div className="spinner" />
-                    <p className="loading-text">Finding restaurants nearby...</p>
+    return (
+        <div className="feed-page">
+            <div className="stage">
+                <BrandSide />
+                <div className="phone-side">
+                    <PhoneFrame>
+                        <FeedApp
+                            videoCards={videoCards}
+                            currentIndex={currentIndex}
+                            setCurrentIndex={setCurrentIndex}
+                            loading={loading}
+                            likedPlaces={likedPlaces}
+                            likeDeltas={likeDeltas}
+                            handleToggleLike={handleToggleLike}
+                            radiusMiles={radiusMiles}
+                            setRadiusMiles={setRadiusMiles}
+                            setLoading={setLoading}
+                        />
+                    </PhoneFrame>
                 </div>
             </div>
-        )
-    }
-
-    const cards = videoCards.length > 0 ? videoCards : [FALLBACK_CARD]
-    const prevIndex = (currentIndex - 1 + cards.length) % cards.length
-    const nextIndex = (currentIndex + 1) % cards.length
-
-    return (
-        <div className="feed" ref={feedRef} {...bind()} style={{ touchAction: 'none' }} tabIndex={-1}>
-            <AnimatedFeedCard className="feed-card" style={{ y: y.to(v => v - cardHeight) }}>
-                <SwipeCard
-                    key={`prev-${prevIndex}`}
-                    card={cards[prevIndex]}
-                    active={false}
-                    liked={!!likedPlaces[cards[prevIndex].placeId]}
-                    likeCount={displayedLikeCount(cards[prevIndex])}
-                    onToggleLike={handleToggleLike}
-                />
-            </AnimatedFeedCard>
-            <AnimatedFeedCard className="feed-card" style={{ y }}>
-                <SwipeCard
-                    key={`current-${currentIndex}`}
-                    card={cards[currentIndex]}
-                    active={true}
-                    liked={!!likedPlaces[cards[currentIndex].placeId]}
-                    likeCount={displayedLikeCount(cards[currentIndex])}
-                    onToggleLike={handleToggleLike}
-                />
-            </AnimatedFeedCard>
-            <AnimatedFeedCard className="feed-card" style={{ y: y.to(v => v + cardHeight) }}>
-                <SwipeCard
-                    key={`next-${nextIndex}`}
-                    card={cards[nextIndex]}
-                    active={false}
-                    liked={!!likedPlaces[cards[nextIndex].placeId]}
-                    likeCount={displayedLikeCount(cards[nextIndex])}
-                    onToggleLike={handleToggleLike}
-                />
-            </AnimatedFeedCard>
-            {rangeFilter}
         </div>
     )
 }

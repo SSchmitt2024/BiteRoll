@@ -15,23 +15,150 @@
     box-sizing: border-box;
 }
 
-body {
+html, body {
     margin: 0;
     padding: 0;
     font-family: 'Nunito', -apple-system, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    color: var(--br-ink);
+    overflow-x: hidden;
 }
 
-/* ── Feed container ──────────────────────────────────────── */
-.feed {
-    background: #000;
-    position: relative;
-    overflow: hidden;
+/* ── Feed page — full presentation layout ────────────────── */
+.feed-page {
+    min-height: 100vh;
+    background:
+        radial-gradient(1200px 700px at 15% 0%, var(--br-yellow-soft) 0%, transparent 60%),
+        radial-gradient(900px 700px at 95% 100%, var(--br-yellow) 0%, transparent 55%),
+        var(--br-cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px 80px;
+}
+
+/* ── Stage — centers brand + phone ───────────────────────── */
+.stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 64px;
+    flex-wrap: wrap;
     width: 100%;
-    max-width: 430px;
-    height: 100vh;
-    height: 100dvh;
-    margin: 0 auto;
+    max-width: 1280px;
+}
+
+/* ── Brand side (left panel) ─────────────────────────────── */
+.brand-side {
+    flex: 0 1 460px;
+    min-width: 320px;
+}
+
+.brand-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(31,35,48,0.06);
+    padding: 8px 14px 8px 8px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--br-ink-soft);
+}
+
+.brand-meta-pip {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--br-ink);
+    color: var(--br-yellow);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+}
+
+.brand-wordmark {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 88px;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--br-ink);
+    margin: 12px 0 12px;
+}
+
+.brand-dot {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--br-coral);
+    margin: 0 0 14px 4px;
+    vertical-align: middle;
+}
+
+.brand-tagline {
+    font-size: 22px;
+    line-height: 1.35;
+    color: var(--br-ink);
+    margin: 0 0 28px;
+    font-weight: 600;
+    max-width: 420px;
+}
+
+.brand-features {
+    margin-top: 36px;
+    display: grid;
+    gap: 14px;
+}
+
+.brand-feature {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    color: var(--br-ink-soft);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.4;
+    max-width: 380px;
+}
+
+.brand-feature b {
+    color: var(--br-ink);
+    font-weight: 800;
+}
+
+.brand-feature-num {
+    flex: 0 0 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--br-ink);
+    color: var(--br-yellow);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 13px;
+}
+
+/* Hide brand panel on narrow screens — phone only */
+@media (max-width: 880px) {
+    .brand-side { display: none; }
+    .feed-page { padding: 20px; }
+}
+
+/* ── Phone side ──────────────────────────────────────────── */
+.phone-side {
+    flex: 0 0 auto;
+}
+
+/* ── Feed inner (app inside the phone frame) ─────────────── */
+.feed-inner {
+    background: #000;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
     user-select: none;
 }
 
@@ -96,7 +223,7 @@ body {
 /* ── Range filter ────────────────────────────────────────── */
 .range-filter {
     position: absolute;
-    top: 14px;
+    top: 56px;
     right: 14px;
     z-index: 10;
     padding: 8px 12px;
@@ -137,7 +264,7 @@ body {
     background: #000;
 }
 
-/* ── Vignette overlay for UI legibility ──────────────────── */
+/* ── Vignette overlay ────────────────────────────────────── */
 .card-vignette {
     position: absolute;
     inset: 0;
@@ -152,7 +279,7 @@ body {
     z-index: 1;
 }
 
-/* ── Restaurant pill (bottom-left) ─────────���─────────────── */
+/* ── Restaurant pill (bottom-left, not clickable) ────────── */
 .restaurant-pill {
     position: absolute;
     left: 16px;
@@ -267,7 +394,7 @@ body {
     100% { transform: scale(1.4); opacity: 0; }
 }
 
-/* ── Fallback card ───────────────────────────────────────── */
+/* ── Fallback card (no videos) ───────────────────────────── */
 .swipe-card:has(video[src=""]) video {
     display: none;
 }
@@ -339,7 +466,6 @@ body {
     display: flex;
     justify-content: center;
     padding-top: 10px;
-    padding-bottom: 0;
 }
 
 .menu-handle::after {
