@@ -1,0 +1,77 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'Route 53 records: latency-based routing for the API across us-east-2 and us-west-2, plus alias for the app CloudFront domain.'
+
+Parameters:
+    HostedZoneName:
+        Type: String
+        Description: 'Your Route 53 hosted zone name with trailing dot, e.g. biteroll.com.'
+
+    ApiDomainName:
+        Type: String
+        Description: 'The API subdomain, e.g. api.biteroll.com'
+
+    AppDomainName:
+        Type: String
+        Description: 'The app subdomain, e.g. app.biteroll.com'
+
+    # Paste these from the APIGateway stack outputs after deploying each region
+    EastApiRegionalDomainName:
+        Type: String
+        Description: 'RegionalDomainName output from biteroll-api-gateway stack in us-east-2'
+    EastApiRegionalHostedZoneId:
+        Type: String
+        Description: 'RegionalHostedZoneId output from biteroll-api-gateway stack in us-east-2'
+
+    WestApiRegionalDomainName:
+        Type: String
+        Description: 'RegionalDomainName output from biteroll-api-gateway stack in us-west-2'
+    WestApiRegionalHostedZoneId:
+        Type: String
+        Description: 'RegionalHostedZoneId output from biteroll-api-gateway stack in us-west-2'
+
+    CloudFrontDomainName:
+        Type: String
+        Description: 'CloudFrontDomainName output from biteroll-cloudfront stack (e.g. d2qr32hgpdefgg.cloudfront.net)'
+
+Resources:
+    # Latency record pointing at us-east-2 API Gateway
+    ApiLatencyEast:
+        Type: AWS::Route53::RecordSet
+        Properties:
+            HostedZoneName: !Ref HostedZoneName
+            Name: !Ref ApiDomainName
+            Type: A
+            SetIdentifier: api-us-east-2
+            Region: us-east-2
+            AliasTarget:
+                DNSName: !Ref EastApiRegionalDomainName
+                HostedZoneId: !Ref EastApiRegionalHostedZoneId
+                EvaluateTargetHealth: true
+
+    # Latency record pointing at us-west-2 API Gateway
+    ApiLatencyWest:
+        Type: AWS::Route53::RecordSet
+        Properties:
+            HostedZoneName: !Ref HostedZoneName
+            Name: !Ref ApiDomainName
+            Type: A
+            SetIdentifier: api-us-west-2
+            Region: us-west-2
+            AliasTarget:
+                DNSName: !Ref WestApiRegionalDomainName
+                HostedZoneId: !Ref WestApiRegionalHostedZoneId
+                EvaluateTargetHealth: true
+
+    # Simple alias pointing app subdomain at CloudFront
+    AppAlias:
+        Type: AWS::Route53::RecordSet
+        Properties:
+            HostedZoneName: !Ref HostedZoneName
+            Name: !Ref AppDomainName
+            Type: A
+            AliasTarget:
+                DNSName: !Ref CloudFrontDomainName
+                HostedZoneId: Z2FDTNDATAQYW2  # CloudFront's fixed hosted zone ID
+                EvaluateTargetHealth: false

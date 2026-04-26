@@ -1,12 +1,12 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 
-Description: 'DB to hold restaurant info.'
+Description: 'DB to hold restaurant info. Deployed as a Global Table with replicas in us-east-2 and us-west-2.'
 
 Resources:
     BiteRollDynamoDBTable:
-        Type: AWS::DynamoDB::Table
-        Properties: 
+        Type: AWS::DynamoDB::GlobalTable
+        Properties:
             TableName: BiteRollRestaurants
             AttributeDefinitions:
               - AttributeName: placeId
@@ -15,9 +15,17 @@ Resources:
               - AttributeName: placeId
                 KeyType: HASH
             BillingMode: PAY_PER_REQUEST
-            Tags:
-              - Key: Project
-                Value: BiteRoll
+            StreamSpecification:
+                StreamViewType: NEW_AND_OLD_IMAGES
+            Replicas:
+              - Region: us-east-2
+                Tags:
+                  - Key: Project
+                    Value: BiteRoll
+              - Region: us-west-2
+                Tags:
+                  - Key: Project
+                    Value: BiteRoll
 
 Outputs:
     BiteRollDynamoDBTable:

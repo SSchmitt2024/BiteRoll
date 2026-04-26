@@ -1,11 +1,13 @@
-import { useState, useEffect, useRef } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { useSpring, animated } from '@react-spring/web'
 import { useDrag } from '@use-gesture/react'
 import SwipeCard from '../components/SwipeCard.jsx'
+import { logError, logInfo, logWarn } from '../utils/logger.js'
 
 const RADIUS_OPTIONS_MILES = [1, 3, 5, 10, 100]
 const METERS_PER_MILE = 1609.344
+const AnimatedFeedCard = animated.div
 
 export default function Feed() {
 
@@ -16,24 +18,26 @@ export default function Feed() {
     const [radiusMiles, setRadiusMiles] = useState(5)
     const [likedPlaces, setLikedPlaces] = useState({})
     const [likeDeltas, setLikeDeltas] = useState({})
+    const [cardHeight, setCardHeight] = useState(window.innerHeight)
     const swiped = useRef(false)
     const feedRef = useRef(null)
-    const cardHeight = useRef(window.innerHeight)
 
     const [{ y }, api] = useSpring(() => ({ y: 0 }))
 
     useEffect(() => {
-        const onResize = () => { cardHeight.current = window.innerHeight }
+        const onResize = () => { setCardHeight(window.innerHeight) }
         window.addEventListener('resize', onResize)
         return () => window.removeEventListener('resize', onResize)
     }, [])
 
-    function swipe(direction) {
+    const swipe = useCallback((direction) => {
         if (swiped.current || videoCards.length === 0) return
+        const currentCard = videoCards[currentIndex]
+        logInfo('feed_swipe_started', { direction, placeId: currentCard?.placeId })
         swiped.current = true
         const goUp = direction === 'up'
         api.start({
-            y: goUp ? -cardHeight.current : cardHeight.current,
+            y: goUp ? -cardHeight : cardHeight,
             onRest: () => {
                 flushSync(() => {
                     setCurrentIndex(prev => {
@@ -46,7 +50,7 @@ export default function Feed() {
                 swiped.current = false
             }
         })
-    }
+    }, [api, cardHeight, currentIndex, videoCards])
 
     useEffect(() => {
         const el = feedRef.current
@@ -70,21 +74,31 @@ export default function Feed() {
             el.removeEventListener('wheel', onWheel)
             window.removeEventListener('keydown', onKey)
         }
-    }, [videoCards.length])
+    }, [swipe])
 
     useEffect(() => {
+        logInfo('geolocation_request_started')
         navigator.geolocation.getCurrentPosition(
-            pos => setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-            () => setLoading(false)
+            pos => {
+                logInfo('geolocation_request_succeeded', { accuracyMeters: Math.round(pos.coords.accuracy || 0) })
+                setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+            },
+            error => {
+                logWarn('geolocation_request_failed', { code: error.code, message: error.message })
+                setLoading(false)
+            }
         )
     }, [])
 
     useEffect(() => {
         if (!position) return
-        setLoading(true)
         const radiusMeters = Math.round(radiusMiles * METERS_PER_MILE)
-        fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/feed?lat=${position.lat}&lng=${position.lng}&radius=${radiusMeters}`)
-        .then(response => response.json())
+        logInfo('feed_request_started', { radiusMeters })
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/feed?lat=${position.lat}&lng=${position.lng}&radius=${radiusMeters}`)
+        .then(response => {
+            if (!response.ok) throw new Error(`Feed request failed with status ${response.status}`)
+            return response.json()
+        })
         .then(data => {
             const cards = data.restaurants.flatMap(restaurant =>
                 restaurant.videos.map(video => ({
@@ -99,21 +113,35 @@ export default function Feed() {
             setVideoCards(cards)
             setCurrentIndex(0)
             setLoading(false)
+            logInfo('feed_request_succeeded', {
+                restaurantCount: data.restaurants.length,
+                cardCount: cards.length,
+                radiusMeters
+            })
         })
-        .catch(() => {
+        .catch(error => {
+            logError('feed_request_failed', { radiusMeters, message: error.message })
             setLoading(false)
         })
     }, [position, radiusMiles])
 
     function handleToggleLike(placeId, nextLiked) {
+        const action = nextLiked ? 'like' : 'unlike'
+        logInfo('like_request_started', { placeId, action })
         setLikedPlaces(prev => ({ ...prev, [placeId]: nextLiked }))
         setLikeDeltas(prev => ({
             ...prev,
             [placeId]: (prev[placeId] || 0) + (nextLiked ? 1 : -1)
         }))
-        const action = nextLiked ? 'like' : 'unlike'
-        fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/like?placeId=${placeId}&action=${action}`, {
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/like?placeId=${placeId}&action=${action}`, {
             method: 'POST'
+        })
+        .then(response => {
+            if (!response.ok) throw new Error(`Like request failed with status ${response.status}`)
+            logInfo('like_request_succeeded', { placeId, action })
+        })
+        .catch(error => {
+            logError('like_request_failed', { placeId, action, message: error.message })
         })
     }
 
@@ -138,7 +166,10 @@ export default function Feed() {
         <select
             className="range-filter"
             value={radiusMiles}
-            onChange={e => setRadiusMiles(Number(e.target.value))}
+            onChange={e => {
+                setLoading(true)
+                setRadiusMiles(Number(e.target.value))
+            }}
         >
             {RADIUS_OPTIONS_MILES.map(mi => (
                 <option key={mi} value={mi}>{mi} mi</option>
@@ -174,7 +205,7 @@ export default function Feed() {
 
     return (
         <div className="feed" ref={feedRef} {...bind()} style={{ touchAction: 'none' }} tabIndex={-1}>
-            <animated.div className="feed-card" style={{ y: y.to(v => v - cardHeight.current) }}>
+            <AnimatedFeedCard className="feed-card" style={{ y: y.to(v => v - cardHeight) }}>
                 <SwipeCard
                     key={`prev-${prevIndex}`}
                     card={videoCards[prevIndex]}
@@ -183,8 +214,8 @@ export default function Feed() {
                     likeCount={displayedLikeCount(videoCards[prevIndex])}
                     onToggleLike={handleToggleLike}
                 />
-            </animated.div>
-            <animated.div className="feed-card" style={{ y }}>
+            </AnimatedFeedCard>
+            <AnimatedFeedCard className="feed-card" style={{ y }}>
                 <SwipeCard
                     key={`current-${currentIndex}`}
                     card={videoCards[currentIndex]}
@@ -193,8 +224,8 @@ export default function Feed() {
                     likeCount={displayedLikeCount(videoCards[currentIndex])}
                     onToggleLike={handleToggleLike}
                 />
-            </animated.div>
-            <animated.div className="feed-card" style={{ y: y.to(v => v + cardHeight.current) }}>
+            </AnimatedFeedCard>
+            <AnimatedFeedCard className="feed-card" style={{ y: y.to(v => v + cardHeight) }}>
                 <SwipeCard
                     key={`next-${nextIndex}`}
                     card={videoCards[nextIndex]}
@@ -203,7 +234,7 @@ export default function Feed() {
                     likeCount={displayedLikeCount(videoCards[nextIndex])}
                     onToggleLike={handleToggleLike}
                 />
-            </animated.div>
+            </AnimatedFeedCard>
             {rangeFilter}
         </div>
     )

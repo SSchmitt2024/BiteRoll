@@ -1,0 +1,90 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'CloudTrail audit trail for BiteRoll AWS account activity'
+
+Parameters:
+    CloudTrailBucketName:
+        Type: String
+        Default: biteroll-cloudtrail-logs-sawyer
+        Description: S3 bucket used to store CloudTrail audit logs
+    LogRetentionDays:
+        Type: Number
+        Default: 90
+        Description: Number of days to retain CloudTrail log objects
+
+Resources:
+    CloudTrailLogBucket:
+        Type: AWS::S3::Bucket
+        DeletionPolicy: Retain
+        UpdateReplacePolicy: Retain
+        Properties:
+            BucketName: !Ref CloudTrailBucketName
+            OwnershipControls:
+                Rules:
+                    - ObjectOwnership: BucketOwnerEnforced
+            PublicAccessBlockConfiguration:
+                BlockPublicAcls: true
+                BlockPublicPolicy: true
+                IgnorePublicAcls: true
+                RestrictPublicBuckets: true
+            BucketEncryption:
+                ServerSideEncryptionConfiguration:
+                    - ServerSideEncryptionByDefault:
+                        SSEAlgorithm: AES256
+            LifecycleConfiguration:
+                Rules:
+                    - Id: ExpireCloudTrailLogs
+                      Status: Enabled
+                      ExpirationInDays: !Ref LogRetentionDays
+            Tags:
+                - Key: Project
+                  Value: BiteRoll
+
+    CloudTrailLogBucketPolicy:
+        Type: AWS::S3::BucketPolicy
+        Properties:
+            Bucket: !Ref CloudTrailLogBucket
+            PolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                    - Sid: AWSCloudTrailAclCheck
+                      Effect: Allow
+                      Principal:
+                          Service: cloudtrail.amazonaws.com
+                      Action: s3:GetBucketAcl
+                      Resource: !GetAtt CloudTrailLogBucket.Arn
+                    - Sid: AWSCloudTrailWrite
+                      Effect: Allow
+                      Principal:
+                          Service: cloudtrail.amazonaws.com
+                      Action: s3:PutObject
+                      Resource: !Sub '${CloudTrailLogBucket.Arn}/AWSLogs/${AWS::AccountId}/*'
+                      Condition:
+                          StringEquals:
+                              s3:x-amz-acl: bucket-owner-full-control
+
+    BiteRollTrail:
+        Type: AWS::CloudTrail::Trail
+        DependsOn: CloudTrailLogBucketPolicy
+        Properties:
+            TrailName: biteroll-management-events
+            S3BucketName: !Ref CloudTrailLogBucket
+            IncludeGlobalServiceEvents: true
+            IsLogging: true
+            IsMultiRegionTrail: true
+            EnableLogFileValidation: true
+            EventSelectors:
+                - ReadWriteType: All
+                  IncludeManagementEvents: true
+            Tags:
+                - Key: Project
+                  Value: BiteRoll
+
+Outputs:
+    CloudTrailBucket:
+        Description: S3 bucket storing CloudTrail audit logs
+        Value: !Ref CloudTrailLogBucket
+    CloudTrailName:
+        Description: CloudTrail trail name
+        Value: !Ref BiteRollTrail

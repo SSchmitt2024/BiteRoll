@@ -1,7 +1,20 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 
-Description: 'Rest API Gateway to handle traffic to lambda backend'
+Description: 'Rest API Gateway to handle traffic to lambda backend. Supports optional regional custom domain for latency routing.'
+
+Parameters:
+    ApiDomainName:
+        Type: String
+        Default: ''
+        Description: 'Custom domain for the API, e.g. api.biteroll.com. Leave empty to skip.'
+    RegionalCertArn:
+        Type: String
+        Default: ''
+        Description: 'ACM certificate ARN in THIS region covering ApiDomainName. Required when ApiDomainName is set.'
+
+Conditions:
+    HasCustomDomain: !Not [!Equals [!Ref ApiDomainName, '']]
 
 Resources:
     API:
@@ -93,3 +106,37 @@ Resources:
             Action: lambda:InvokeFunction
             Principal: apigateway.amazonaws.com
             SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*'
+
+    # Custom domain for Route 53 latency routing — only created when ApiDomainName is provided
+    RegionalDomainName:
+        Type: AWS::ApiGateway::DomainName
+        Condition: HasCustomDomain
+        Properties:
+            DomainName: !Ref ApiDomainName
+            RegionalCertificateArn: !Ref RegionalCertArn
+            EndpointConfiguration:
+                Types:
+                  - REGIONAL
+
+    BasePathMapping:
+        Type: AWS::ApiGateway::BasePathMapping
+        Condition: HasCustomDomain
+        DependsOn: Stage
+        Properties:
+            DomainName: !Ref RegionalDomainName
+            RestApiId: !Ref API
+            Stage: prod
+
+Outputs:
+    ApiRegionalDomainName:
+        Condition: HasCustomDomain
+        Description: 'Regional domain name — use this as the Route 53 alias target'
+        Value: !GetAtt RegionalDomainName.RegionalDomainName
+        Export:
+            Name: !Sub 'ApiRegionalDomainName-${AWS::Region}'
+    ApiRegionalHostedZoneId:
+        Condition: HasCustomDomain
+        Description: 'Hosted zone ID for the regional API Gateway endpoint'
+        Value: !GetAtt RegionalDomainName.RegionalHostedZoneId
+        Export:
+            Name: !Sub 'ApiRegionalHostedZoneId-${AWS::Region}'
