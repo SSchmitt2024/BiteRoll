@@ -1,0 +1,63 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'Monthly AWS budget for BiteRoll cost monitoring'
+
+Parameters:
+    AlertEmail:
+        Type: String
+        Description: Email address for budget threshold notifications
+
+Resources:
+    BiteRollMonthlyBudget:
+        Type: AWS::Budgets::Budget
+        Properties:
+            Budget:
+                BudgetName: BiteRoll-Monthly-1USD
+                BudgetLimit:
+                    Amount: 1
+                    Unit: USD
+                TimeUnit: MONTHLY
+                BudgetType: COST
+                CostTypes:
+                    IncludeCredit: true
+                    IncludeDiscount: true
+                    IncludeOtherSubscription: true
+                    IncludeRecurring: true
+                    IncludeRefund: true
+                    IncludeSubscription: true
+                    IncludeSupport: true
+                    IncludeTax: true
+                    IncludeUpfront: true
+                    UseAmortized: false
+                    UseBlended: false
+            NotificationsWithSubscribers:
+                - Notification:
+                    NotificationType: ACTUAL
+                    ComparisonOperator: GREATER_THAN
+                    Threshold: 50
+                    ThresholdType: PERCENTAGE
+                  Subscribers:
+                    - SubscriptionType: EMAIL
+                      Address: !Ref AlertEmail
+                - Notification:
+                    NotificationType: ACTUAL
+                    ComparisonOperator: GREATER_THAN
+                    Threshold: 80
+                    ThresholdType: PERCENTAGE
+                  Subscribers:
+                    - SubscriptionType: EMAIL
+                      Address: !Ref AlertEmail
+                - Notification:
+                    NotificationType: FORECASTED
+                    ComparisonOperator: GREATER_THAN
+                    Threshold: 100
+                    ThresholdType: PERCENTAGE
+                  Subscribers:
+                    - SubscriptionType: EMAIL
+                      Address: !Ref AlertEmail
+
+Outputs:
+    BudgetName:
+        Description: Monthly budget name
+        Value: BiteRoll-Monthly-1USD

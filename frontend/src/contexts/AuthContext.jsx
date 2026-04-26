@@ -17,7 +17,7 @@ async function cognitoPost(target, body) {
     return response;
 }
 
-async function signup(username, email, password) {
+export async function signup(username, email, password) {
     const body = {
         ClientId: COG_CLIENT_ID,
         Username: email,

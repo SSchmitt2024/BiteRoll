@@ -6,7 +6,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { COG_USER_POOL_ID, COG_CLIENT_ID } from '../aws-config'
-import { CognitoUserPool, CognitoUser, AuthenticationDetails, CognitoUserAttribute } from 'amazon-cognito-identity-js'
+import { CognitoUserPool, CognitoUserAttribute } from 'amazon-cognito-identity-js'
+import { logError, logInfo, logWarn } from '../utils/logger.js'
 
 const poolData = {
     UserPoolId: COG_USER_POOL_ID,
@@ -35,14 +36,16 @@ export default function SignUp() {
 
     async function handleSubmit(e) {
         e.preventDefault()
+        logInfo('signup_started', { hasEmail: Boolean(email), hasUsername: Boolean(username) })
         const errs = validate()
         setFieldErrors({})
-        
-        if (Object.keys(errs).length) { 
+
+        if (Object.keys(errs).length) {
+            logWarn('signup_validation_failed', { fields: Object.keys(errs) })
             setFieldErrors(errs)
-            if (errs.confirm) { 
-                setPassword('') 
-                setConfirm('') 
+            if (errs.confirm) {
+                setPassword('')
+                setConfirm('')
             }
             return
         }
@@ -53,10 +56,10 @@ export default function SignUp() {
         ]
         function callback(err, result){
             if (err) {
-                console.log(err)
+                logError('signup_failed', { code: err.code, message: err.message })
                 return
             }
-            console.log(result)
+            logInfo('signup_succeeded', { userConfirmed: result.userConfirmed })
             navigate('/confirm', { state: { email: email } })
         }
         userPool.signUp(email, password, attributeList, null, callback)

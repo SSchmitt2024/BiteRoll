@@ -1,0 +1,26 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'Destination bucket for S3 cross-region replication of biteroll-media-sawyer. Deploy this stack in us-west-2 BEFORE enabling replication on the source bucket.'
+
+Resources:
+    BiteRollMediaBucketWest:
+        Type: 'AWS::S3::Bucket'
+        Properties:
+            BucketName: 'biteroll-media-sawyer-west'
+            PublicAccessBlockConfiguration:
+                BlockPublicAcls: true
+                BlockPublicPolicy: true
+                IgnorePublicAcls: true
+                RestrictPublicBuckets: true
+            VersioningConfiguration:
+                Status: Enabled
+            Tags:
+                - Key: Project
+                  Value: BiteRoll
+
+Outputs:
+    BucketArn:
+        Value: !GetAtt BiteRollMediaBucketWest.Arn
+    BucketName:
+        Value: !Ref BiteRollMediaBucketWest

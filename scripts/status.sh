@@ -66,6 +66,53 @@ aws cloudformation describe-stacks \
 SNS_Status=$?
 resources["SNS"]=$SNS_Status
 
+echo -e "\n[ === CloudWatch Status === ]"
+aws cloudformation describe-stacks \
+    --stack-name biteroll-cloudwatch \
+    --query 'Stacks[0].StackStatus' \
+    --output text
+CW_Status=$?
+resources["CloudWatch"]=$CW_Status
+
+aws cloudwatch describe-alarms \
+    --alarm-names \
+        BiteRoll-Lambda-Errors \
+        BiteRoll-Lambda-Throttles \
+        BiteRoll-Lambda-Duration \
+        BiteRoll-APIGW-5xx \
+        BiteRoll-APIGW-4xx \
+        BiteRoll-APIGW-Latency \
+    --query 'MetricAlarms[*].{Alarm:AlarmName,State:StateValue}' \
+    --output table
+
+echo -e "\n[ === CloudTrail Status === ]"
+aws cloudformation describe-stacks \
+    --stack-name biteroll-cloudtrail \
+    --query 'Stacks[0].StackStatus' \
+    --output text
+CT_Status=$?
+resources["CloudTrail"]=$CT_Status
+
+aws cloudtrail get-trail-status \
+    --name biteroll-management-events \
+    --query '{Logging:IsLogging,LatestDeliveryError:LatestDeliveryError,LatestDeliveryTime:LatestDeliveryTime}' \
+    --output table
+
+echo -e "\n[ ===== Budget Status ===== ]"
+aws cloudformation describe-stacks \
+    --stack-name biteroll-budget \
+    --query 'Stacks[0].StackStatus' \
+    --output text
+BUDGET_Status=$?
+resources["Budget"]=$BUDGET_Status
+
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+aws budgets describe-budget \
+    --account-id "$ACCOUNT_ID" \
+    --budget-name BiteRoll-Monthly-1USD \
+    --query 'Budget.{Name:BudgetName,Limit:BudgetLimit.Amount,Unit:BudgetLimit.Unit,TimeUnit:TimeUnit}' \
+    --output table
+
 #==============================================================================
 echo ""
 issues=0

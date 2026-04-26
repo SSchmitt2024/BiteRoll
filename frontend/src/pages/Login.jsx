@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { COG_USER_POOL_ID, COG_CLIENT_ID } from '../aws-config'
 import { CognitoUserPool, CognitoUser , AuthenticationDetails } from 'amazon-cognito-identity-js'
+import { logError, logInfo } from '../utils/logger.js'
 
 const poolData = {
     UserPoolId: COG_USER_POOL_ID,
@@ -23,6 +24,7 @@ export default function Login() {
 
     async function handleSubmit(e) {
         e.preventDefault()
+        logInfo('login_started', { hasEmail: Boolean(email) })
         const userDetails = {
             Username: email,
             Password: password,
@@ -32,12 +34,16 @@ export default function Login() {
             Pool: userPool,
         }
         const callbacks = {
-            onSuccess: (result) => {
-                console.log(result)
+            onSuccess: () => {
+                logInfo('login_succeeded')
                 navigate('/feed')
             },
-            onFailure: (err) => {console.log(err)},
-            newPasswordRequired: () => {},
+            onFailure: (err) => {
+                logError('login_failed', { code: err.code, message: err.message })
+            },
+            newPasswordRequired: () => {
+                logInfo('login_new_password_required')
+            },
 
         };
         const authDetails = new AuthenticationDetails(userDetails);

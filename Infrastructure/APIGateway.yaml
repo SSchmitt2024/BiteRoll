@@ -1,13 +1,38 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 
-Description: 'Rest API Gateway to handle traffic to lambda backend'
+Description: 'Rest API Gateway to handle traffic to lambda backend. Supports optional regional custom domain for latency routing.'
+
+Parameters:
+    ApiDomainName:
+        Type: String
+        Default: ''
+        Description: 'Custom domain for the API, e.g. api.biteroll.com. Leave empty to skip.'
+    RegionalCertArn:
+        Type: String
+        Default: ''
+        Description: 'ACM certificate ARN in THIS region covering ApiDomainName. Required when ApiDomainName is set.'
+
+Conditions:
+    HasCustomDomain: !Not [!Equals [!Ref ApiDomainName, '']]
 
 Resources:
     API:
         Type: AWS::ApiGateway::RestApi
         Properties:
             Name: 'RestAPI'
+
+    CognitoAuthorizer:
+        Type: AWS::ApiGateway::Authorizer
+        Properties:
+            Name: BiteRollCognitoAuthorizer
+            Type: COGNITO_USER_POOLS
+            RestApiId: !Ref API
+            IdentitySource: method.request.header.Authorization
+            ProviderARNs:
+                - !Sub
+                  - 'arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}'
+                  - UserPoolId: !ImportValue CognitoUserPoolID
 
     # /feed
     FeedResource:
@@ -22,13 +47,37 @@ Resources:
             RestApiId: !Ref API
             ResourceId: !Ref FeedResource
             HttpMethod: GET
-            AuthorizationType: NONE
+            AuthorizationType: COGNITO_USER_POOLS
+            AuthorizerId: !Ref CognitoAuthorizer
             Integration:
                 Type: AWS_PROXY
                 IntegrationHttpMethod: POST
                 Uri: !Sub
                   - 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations'
                   - lambdaArn: !ImportValue LambdaFunctionARN
+    FeedOptionsMethod:
+        Type: AWS::ApiGateway::Method
+        Properties:
+            RestApiId: !Ref API
+            ResourceId: !Ref FeedResource
+            HttpMethod: OPTIONS
+            AuthorizationType: NONE
+            Integration:
+                Type: MOCK
+                RequestTemplates:
+                    application/json: '{"statusCode": 200}'
+                IntegrationResponses:
+                    - StatusCode: 200
+                      ResponseParameters:
+                          method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+                          method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+                          method.response.header.Access-Control-Allow-Origin: "'*'"
+            MethodResponses:
+                - StatusCode: 200
+                  ResponseParameters:
+                      method.response.header.Access-Control-Allow-Headers: true
+                      method.response.header.Access-Control-Allow-Methods: true
+                      method.response.header.Access-Control-Allow-Origin: true
 
     # /menu
     MenuResource:
@@ -43,13 +92,37 @@ Resources:
             RestApiId: !Ref API
             ResourceId: !Ref MenuResource
             HttpMethod: GET
-            AuthorizationType: NONE
+            AuthorizationType: COGNITO_USER_POOLS
+            AuthorizerId: !Ref CognitoAuthorizer
             Integration:
                 Type: AWS_PROXY
                 IntegrationHttpMethod: POST
                 Uri: !Sub
                   - 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations'
                   - lambdaArn: !ImportValue LambdaFunctionARN
+    MenuOptionsMethod:
+        Type: AWS::ApiGateway::Method
+        Properties:
+            RestApiId: !Ref API
+            ResourceId: !Ref MenuResource
+            HttpMethod: OPTIONS
+            AuthorizationType: NONE
+            Integration:
+                Type: MOCK
+                RequestTemplates:
+                    application/json: '{"statusCode": 200}'
+                IntegrationResponses:
+                    - StatusCode: 200
+                      ResponseParameters:
+                          method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+                          method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+                          method.response.header.Access-Control-Allow-Origin: "'*'"
+            MethodResponses:
+                - StatusCode: 200
+                  ResponseParameters:
+                      method.response.header.Access-Control-Allow-Headers: true
+                      method.response.header.Access-Control-Allow-Methods: true
+                      method.response.header.Access-Control-Allow-Origin: true
 
     # /like
     LikeResource:
@@ -64,27 +137,54 @@ Resources:
             RestApiId: !Ref API
             ResourceId: !Ref LikeResource
             HttpMethod: POST
-            AuthorizationType: NONE
+            AuthorizationType: COGNITO_USER_POOLS
+            AuthorizerId: !Ref CognitoAuthorizer
             Integration:
                 Type: AWS_PROXY
                 IntegrationHttpMethod: POST
                 Uri: !Sub
                   - 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations'
                   - lambdaArn: !ImportValue LambdaFunctionARN
+    LikeOptionsMethod:
+        Type: AWS::ApiGateway::Method
+        Properties:
+            RestApiId: !Ref API
+            ResourceId: !Ref LikeResource
+            HttpMethod: OPTIONS
+            AuthorizationType: NONE
+            Integration:
+                Type: MOCK
+                RequestTemplates:
+                    application/json: '{"statusCode": 200}'
+                IntegrationResponses:
+                    - StatusCode: 200
+                      ResponseParameters:
+                          method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+                          method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+                          method.response.header.Access-Control-Allow-Origin: "'*'"
+            MethodResponses:
+                - StatusCode: 200
+                  ResponseParameters:
+                      method.response.header.Access-Control-Allow-Headers: true
+                      method.response.header.Access-Control-Allow-Methods: true
+                      method.response.header.Access-Control-Allow-Origin: true
 
-    Deployment:
+    DeploymentAuthCors20260426:
         Type: AWS::ApiGateway::Deployment
         Properties:
             RestApiId: !Ref API
         DependsOn:
           - FeedMethod
+          - FeedOptionsMethod
           - MenuMethod
+          - MenuOptionsMethod
           - LikeMethod
+          - LikeOptionsMethod
     Stage:
         Type: AWS::ApiGateway::Stage
         Properties:
             RestApiId: !Ref API
-            DeploymentId: !Ref Deployment
+            DeploymentId: !Ref DeploymentAuthCors20260426
             StageName: prod
     LambdaPermission:
         Type: AWS::Lambda::Permission
@@ -93,3 +193,42 @@ Resources:
             Action: lambda:InvokeFunction
             Principal: apigateway.amazonaws.com
             SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*'
+
+    # Custom domain for Route 53 latency routing — only created when ApiDomainName is provided
+    RegionalDomainName:
+        Type: AWS::ApiGateway::DomainName
+        Condition: HasCustomDomain
+        Properties:
+            DomainName: !Ref ApiDomainName
+            RegionalCertificateArn: !Ref RegionalCertArn
+            EndpointConfiguration:
+                Types:
+                  - REGIONAL
+
+    BasePathMapping:
+        Type: AWS::ApiGateway::BasePathMapping
+        Condition: HasCustomDomain
+        DependsOn: Stage
+        Properties:
+            DomainName: !Ref RegionalDomainName
+            RestApiId: !Ref API
+            Stage: prod
+
+Outputs:
+    ApiInvokeUrl:
+        Description: 'Invoke URL for the deployed prod stage'
+        Value: !Sub 'https://${API}.execute-api.${AWS::Region}.amazonaws.com/prod'
+        Export:
+            Name: !Sub 'ApiInvokeUrl-${AWS::Region}'
+    ApiRegionalDomainName:
+        Condition: HasCustomDomain
+        Description: 'Regional domain name — use this as the Route 53 alias target'
+        Value: !GetAtt RegionalDomainName.RegionalDomainName
+        Export:
+            Name: !Sub 'ApiRegionalDomainName-${AWS::Region}'
+    ApiRegionalHostedZoneId:
+        Condition: HasCustomDomain
+        Description: 'Hosted zone ID for the regional API Gateway endpoint'
+        Value: !GetAtt RegionalDomainName.RegionalHostedZoneId
+        Export:
+            Name: !Sub 'ApiRegionalHostedZoneId-${AWS::Region}'

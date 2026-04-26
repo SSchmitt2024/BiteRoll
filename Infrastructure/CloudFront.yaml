@@ -1,15 +1,38 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 
-Description: 'CloudFront to route to S3 bucket'
+Description: 'CloudFront to route to S3 bucket. Supports optional custom domain to avoid network blocks.'
+
+Parameters:
+    AppDomainName:
+        Type: String
+        Default: ''
+        Description: 'Custom domain for the app, e.g. app.biteroll.com. Leave empty to use the CloudFront URL.'
+    AcmCertArn:
+        Type: String
+        Default: ''
+        Description: 'ACM certificate ARN in us-east-1 covering AppDomainName. Required when AppDomainName is set.'
+
+Conditions:
+    HasCustomDomain: !Not [!Equals [!Ref AppDomainName, '']]
 
 Resources:
     BiteRollCloudFront:
         Type: 'AWS::CloudFront::Distribution'
-        Properties: 
-            DistributionConfig: 
+        Properties:
+            DistributionConfig:
                 Comment: "BiteRoll"
-                DefaultCacheBehavior: 
+                Aliases: !If
+                  - HasCustomDomain
+                  - [!Ref AppDomainName]
+                  - !Ref AWS::NoValue
+                ViewerCertificate: !If
+                  - HasCustomDomain
+                  - AcmCertificateArn: !Ref AcmCertArn
+                    SslSupportMethod: sni-only
+                    MinimumProtocolVersion: TLSv1.2_2021
+                  - CloudFrontDefaultCertificate: true
+                DefaultCacheBehavior:
                     ViewerProtocolPolicy: 'redirect-to-https'
                     TargetOriginId: 'BiteRollS3Origin'
                     CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad  #CachingDisabled
@@ -30,21 +53,22 @@ Resources:
                     ResponseCode: 200
                     ResponsePagePath: /index.html
                 Enabled: true
-                Origins: 
+                Origins:
                     - Id: 'BiteRollS3Origin'
                       DomainName: !ImportValue DomainName
                       OriginAccessControlId: !GetAtt BiteRollCloudFrontOAC.Id
                       S3OriginConfig:
-                        OriginAccessIdentity: ''
+                          OriginAccessIdentity: ''
                     - Id: 'BiteRollMediaS3Origin'
                       DomainName: !ImportValue MediaDomainName
                       OriginAccessControlId: !GetAtt BiteRollCloudFrontOAC.Id
                       S3OriginConfig:
-                        OriginAccessIdentity: ''                      
+                          OriginAccessIdentity: ''
                 DefaultRootObject: 'index.html'
             Tags:
                 - Key: Project
                   Value: BiteRoll
+
     BiteRollCloudFrontOAC:
         Type: 'AWS::CloudFront::OriginAccessControl'
         Properties:
@@ -56,10 +80,15 @@ Resources:
 
 Outputs:
     CloudFrontDistributionId:
-        Description: 'CloudFrontDistro ID used for letting traffic through it into s3'
+        Description: 'CloudFront distribution ID'
         Value: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${BiteRollCloudFront}'
         Export:
             Name: CloudFrontDistributionId
+    CloudFrontDomainName:
+        Description: 'CloudFront domain name (use this for Route 53 alias)'
+        Value: !GetAtt BiteRollCloudFront.DomainName
+        Export:
+            Name: CloudFrontDomainName
 
 
 

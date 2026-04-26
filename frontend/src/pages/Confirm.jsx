@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 
 import { COG_USER_POOL_ID, COG_CLIENT_ID } from '../aws-config'
-import { CognitoUserPool, CognitoUser, AuthenticationDetails, CognitoUserAttribute } from 'amazon-cognito-identity-js'
+import { CognitoUserPool, CognitoUser } from 'amazon-cognito-identity-js'
+import { logError, logInfo } from '../utils/logger.js'
 
 const poolData = {
     UserPoolId: COG_USER_POOL_ID,
@@ -21,6 +22,7 @@ export default function Confirm() {
 
     async function handleSubmit(e) {
         e.preventDefault();
+        logInfo('email_confirmation_started', { hasEmail: Boolean(email) })
         const userPoolDetails = {
             Username: email,
             Pool: userPool,
@@ -28,11 +30,11 @@ export default function Confirm() {
         const cogUser = new CognitoUser(userPoolDetails);
         
         cogUser.confirmRegistration(code, true, (err, result) => {
-            if (err) { 
-                console.log(err); 
-                return 
+            if (err) {
+                logError('email_confirmation_failed', { code: err.code, message: err.message })
+                return
             }
-            console.log(result)
+            logInfo('email_confirmation_succeeded', { result })
         })
     }
 

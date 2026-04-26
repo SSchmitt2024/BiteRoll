@@ -1,13 +1,30 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-
 Description: 'Lambda to handle all backend business logic'
+
+Parameters:
+    DynamoDBTableArn:
+        Type: String
+        Default: ''
+        Description: 'DynamoDB table ARN. Leave empty to use cross-stack import (east only).'
+    SecretsArn:
+        Type: String
+        Default: ''
+        Description: 'Secrets Manager ARN. Leave empty to use cross-stack import (east only).'
+    LambdaCodeBucket:
+        Type: String
+        Default: 'biteroll-static-site-sawyer'
+        Description: 'S3 bucket containing lambda.zip. Must be in the same region as the stack.'
+
+Conditions:
+    UseDynamoImport: !Equals [!Ref DynamoDBTableArn, '']
+    UseSecretsImport: !Equals [!Ref SecretsArn, '']
 
 Resources:
     IAMRole:
         Type: 'AWS::IAM::Role'
         Properties:
-            AssumeRolePolicyDocument: 
+            AssumeRolePolicyDocument:
                 Version: "2012-10-17"
                 Statement:
                   - Effect: Allow
@@ -17,7 +34,7 @@ Resources:
                     Action:
                       - 'sts:AssumeRole'
             Description: "The role of the lambda"
-            ManagedPolicyArns: 
+            ManagedPolicyArns:
               - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
             Policies:
               - PolicyName: BiteRollDynamoDBAccess
@@ -30,29 +47,35 @@ Resources:
                           - dynamodb:Query
                           - dynamodb:UpdateItem
                           - dynamodb:Scan
-                        Resource: !ImportValue DynamoDBARN
+                        Resource: !If
+                          - UseDynamoImport
+                          - !ImportValue DynamoDBARN
+                          - !Ref DynamoDBTableArn
                       - Effect: Allow
                         Action:
-                         - secretsmanager:GetSecretValue
-                        Resource: !ImportValue SecretsARN
+                          - secretsmanager:GetSecretValue
+                        Resource: !If
+                          - UseSecretsImport
+                          - !ImportValue SecretsARN
+                          - !Ref SecretsArn
     LambdaFunction:
         Type: AWS::Lambda::Function
         Properties:
             FunctionName: biteroll-api
             Code:
-                S3Bucket: biteroll-static-site-sawyer
+                S3Bucket: !Ref LambdaCodeBucket
                 S3Key: lambda/lambda.zip
-            Runtime: python3.12   
+            Runtime: python3.12
             Handler: lambda.handler
-            Role: !GetAtt IAMRole.Arn    
+            Role: !GetAtt IAMRole.Arn
             Tags:
               - Key: Project
                 Value: BiteRoll
             Timeout: 30
+
 Outputs:
     LambdaFunction:
         Description: "Lambda function ARN"
         Value: !GetAtt LambdaFunction.Arn
         Export:
             Name: LambdaFunctionARN
-        
