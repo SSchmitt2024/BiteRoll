@@ -143,6 +143,11 @@ Resources:
             Stage: prod
 
 Outputs:
+    ApiInvokeUrl:
+        Description: 'Invoke URL for the deployed prod stage'
+        Value: !Sub 'https://${API}.execute-api.${AWS::Region}.amazonaws.com/prod'
+        Export:
+            Name: !Sub 'ApiInvokeUrl-${AWS::Region}'
     ApiRegionalDomainName:
         Condition: HasCustomDomain
         Description: 'Regional domain name — use this as the Route 53 alias target'
