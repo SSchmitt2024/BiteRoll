@@ -698,7 +698,7 @@ html, body {
     flex: 0 0 280px;
     position: relative;
     height: 280px;
-    background: #FFE9A8 url('/banner.png') center / cover no-repeat;
+    background: linear-gradient(180deg, var(--br-yellow) 0%, var(--br-yellow-soft) 100%);
     color: var(--br-ink);
     padding: 44px 24px 18px;
     display: flex;
