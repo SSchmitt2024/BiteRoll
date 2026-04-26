@@ -17,29 +17,7 @@ aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/S3-Media-West.yaml \
     --stack-name biteroll-s3-media-west \
     --region us-west-2
-
-echo "[ 2/4 ] Lambda (us-west-2)"
-cd ../lambda
-zip lambda.zip lambda.py
-# Requires a static-site bucket already exists in us-west-2 — create one manually
-# or update this to use the east bucket with --region override on the cp call
-aws s3 cp lambda.zip s3://biteroll-static-site-sawyer/lambda/lambda.zip --region us-east-2
-aws cloudformation deploy --no-fail-on-empty-changeset \
-    --template-file ../Infrastructure/Lambda.yaml \
-    --stack-name biteroll-lambda \
-    --capabilities CAPABILITY_IAM \
-    --region us-west-2
-aws lambda update-function-code \
-    --function-name biteroll-api \
-    --s3-bucket biteroll-static-site-sawyer \
-    --s3-key lambda/lambda.zip \
-    --region us-west-2 \
-    --query "LastUpdateStatus" \
-    --output text \
-    --no-cli-pager
-
-echo "[ 3/4 ] Secrets (us-west-2) — copy Google Maps key to west region"
-# Manually replicate the secret if not using Secrets Manager replication
+echo "[ 2/4 ] Secrets (us-west-2) — copy Google Maps key to west region"
 GOOGLE_KEY=$(aws secretsmanager get-secret-value \
     --secret-id biteroll/google-maps-api-key \
     --region us-east-2 \
@@ -53,6 +31,32 @@ aws secretsmanager create-secret \
     --secret-string "$GOOGLE_KEY" \
     --region us-west-2
 
+WEST_SECRET_ARN=$(aws secretsmanager describe-secret \
+    --secret-id biteroll/google-maps-api-key \
+    --region us-west-2 \
+    --query "ARN" --output text)
+
+echo "[ 3/4 ] Lambda (us-west-2)"
+cd ../lambda
+zip lambda.zip lambda.py
+aws s3 cp lambda.zip s3://biteroll-static-site-sawyer/lambda/lambda.zip --region us-east-2
+aws cloudformation deploy --no-fail-on-empty-changeset \
+    --template-file ../Infrastructure/Lambda.yaml \
+    --stack-name biteroll-lambda \
+    --capabilities CAPABILITY_IAM \
+    --region us-west-2 \
+    --parameter-overrides \
+      DynamoDBTableArn=arn:aws:dynamodb:us-west-2:640706953694:table/BiteRollRestaurants \
+      SecretsArn=$WEST_SECRET_ARN
+aws lambda update-function-code \
+    --function-name biteroll-api \
+    --s3-bucket biteroll-static-site-sawyer \
+    --s3-key lambda/lambda.zip \
+    --region us-west-2 \
+    --query "LastUpdateStatus" \
+    --output text \
+    --no-cli-pager
+    
 echo "[ 4/4 ] API Gateway (us-west-2)"
 cd ../scripts
 PARAM_OVERRIDES=""
