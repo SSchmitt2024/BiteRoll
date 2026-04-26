@@ -1,15 +1,22 @@
 import { useCallback, useState, useEffect, useRef } from 'react'
 import { flushSync } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import { useSpring, animated } from '@react-spring/web'
 import { useDrag } from '@use-gesture/react'
+import { CognitoUserPool } from 'amazon-cognito-identity-js'
 import SwipeCard from '../components/SwipeCard.jsx'
 import PhoneFrame from '../components/PhoneFrame.jsx'
+import { COG_USER_POOL_ID, COG_CLIENT_ID } from '../aws-config'
 import { logError, logInfo, logWarn } from '../utils/logger.js'
 import { authHeaders } from '../utils/apiAuth.js'
 
 const RADIUS_OPTIONS_MILES = [1, 3, 5, 10, 100]
 const METERS_PER_MILE = 1609.344
 const AnimatedFeedCard = animated.div
+const userPool = new CognitoUserPool({
+    UserPoolId: COG_USER_POOL_ID,
+    ClientId: COG_CLIENT_ID,
+})
 
 const FALLBACK_CARD = {
     placeId: '__fallback__',
@@ -198,6 +205,7 @@ function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlac
 }
 
 export default function Feed() {
+    const navigate = useNavigate()
     const [videoCards, setVideoCards] = useState([])
     const [currentIndex, setCurrentIndex] = useState(0)
     const [loading, setLoading] = useState(true)
@@ -279,8 +287,21 @@ export default function Feed() {
         })
     }
 
+    function handleSignOut() {
+        logInfo('logout_started')
+        const user = userPool.getCurrentUser()
+        if (user) {
+            user.signOut()
+        }
+        logInfo('logout_succeeded')
+        navigate('/login', { replace: true })
+    }
+
     return (
         <div className="feed-page">
+            <button type="button" className="feed-signout" onClick={handleSignOut}>
+                Sign out
+            </button>
             <div className="stage">
                 <BrandSide />
                 <div className="phone-side">
