@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import '../../index.css'
 import { logError, logInfo, logWarn } from '../utils/logger.js'
+import { authHeaders } from '../utils/apiAuth.js'
 
 export default function SwipeCard({ card, active, liked, likeCount, onToggleLike }) {
     const [menu, setMenu] = useState(null)
@@ -30,7 +31,8 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
         setMenuLoading(true)
         logInfo('menu_request_started', { placeId: card.placeId })
         try {
-            const menuResponse = await fetch(`https://00bws6efnk.execute-api.us-east-2.amazonaws.com/prod/menu?placeId=${card.placeId}`)
+            const headers = await authHeaders()
+            const menuResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/menu?placeId=${card.placeId}`, { headers })
             if (!menuResponse.ok) throw new Error('Menu not found')
 
             const menuData = await menuResponse.json()

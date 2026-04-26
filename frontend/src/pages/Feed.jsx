@@ -4,6 +4,7 @@ import { useSpring, animated } from '@react-spring/web'
 import { useDrag } from '@use-gesture/react'
 import SwipeCard from '../components/SwipeCard.jsx'
 import { logError, logInfo, logWarn } from '../utils/logger.js'
+import { authHeaders } from '../utils/apiAuth.js'
 
 const RADIUS_OPTIONS_MILES = [1, 3, 5, 10, 100]
 const METERS_PER_MILE = 1609.344
@@ -94,7 +95,8 @@ export default function Feed() {
         if (!position) return
         const radiusMeters = Math.round(radiusMiles * METERS_PER_MILE)
         logInfo('feed_request_started', { radiusMeters })
-        fetch(`${import.meta.env.VITE_API_BASE_URL}/feed?lat=${position.lat}&lng=${position.lng}&radius=${radiusMeters}`)
+        authHeaders()
+        .then(headers => fetch(`${import.meta.env.VITE_API_BASE_URL}/feed?lat=${position.lat}&lng=${position.lng}&radius=${radiusMeters}`, { headers }))
         .then(response => {
             if (!response.ok) throw new Error(`Feed request failed with status ${response.status}`)
             return response.json()
@@ -133,9 +135,11 @@ export default function Feed() {
             ...prev,
             [placeId]: (prev[placeId] || 0) + (nextLiked ? 1 : -1)
         }))
-        fetch(`${import.meta.env.VITE_API_BASE_URL}/like?placeId=${placeId}&action=${action}`, {
-            method: 'POST'
-        })
+        authHeaders()
+        .then(headers => fetch(`${import.meta.env.VITE_API_BASE_URL}/like?placeId=${placeId}&action=${action}`, {
+            method: 'POST',
+            headers
+        }))
         .then(response => {
             if (!response.ok) throw new Error(`Like request failed with status ${response.status}`)
             logInfo('like_request_succeeded', { placeId, action })

@@ -78,3 +78,12 @@
 - Budget alerts trigger at 80% actual spend.
 - Budget alerts trigger at 100% forecasted spend.
 - Cost monitoring is automated through CloudFormation instead of only manual console setup.
+
+## HONORS
+
+1. DynamoDB Global Tables
+Changed the CloudFormation resource type from AWS::DynamoDB::Table to AWS::DynamoDB::GlobalTable and added a Replicas array listing us-east-2 and us-west-2. DynamoDB handles the rest — any write to either region automatically syncs to the other. We had to delete and recreate the table because CloudFormation can't convert in-place.
+2. S3 Cross-Region Replication
+Created a destination bucket (biteroll-media-sawyer-west) in us-west-2 via the S3-Media-West.yaml template. The replication rule on the source bucket copies new objects to the west bucket automatically. This ensures media is available even if us-east-2 goes down.
+3. Route 53 Latency-Based Routing
+Deployed identical API Gateway + Lambda stacks in both regions, each with a regional custom domain (api.sawyerschmitt.dev). Created two Route 53 A records for the same domain, each with a different Region and SetIdentifier. When a user makes a request, Route 53 measures which region has lower latency from the user's location and routes them there automatically.
