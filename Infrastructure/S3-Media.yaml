@@ -54,6 +54,7 @@ Resources:
                 Rules:
                   - Id: ReplicateAllToWest
                     Status: Enabled
+                    Priority: 1
                     Filter:
                         Prefix: ''
                     Destination:
