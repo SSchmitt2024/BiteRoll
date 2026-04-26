@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 
+import PhoneFrame from '../components/PhoneFrame.jsx'
 import { COG_USER_POOL_ID, COG_CLIENT_ID } from '../aws-config'
 import { CognitoUserPool, CognitoUser } from 'amazon-cognito-identity-js'
 import { logError, logInfo } from '../utils/logger.js'
@@ -40,11 +41,12 @@ export default function Confirm() {
 
     return (
         <div className="auth-outer">
-            <div className="auth-card">
+            <PhoneFrame dark={false}>
+            <div className="auth-screen">
                 <div className="auth-banner">
                     <div className="auth-brand-lockup">
                         <img src="/logo.png" alt="BiteRoll logo" className="auth-logo" />
-                        <div className="auth-brand">BiteRoll</div>
+                        <div className="auth-brand">BiteRoll<span className="auth-brand-dot" /></div>
                     </div>
                     <p className="auth-tagline">Almost there.</p>
                 </div>
@@ -71,6 +73,7 @@ export default function Confirm() {
                     </form>
                 </div>
             </div>
+            </PhoneFrame>
         </div>
     )
 }

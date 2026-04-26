@@ -35,11 +35,11 @@ function StatusBar({ dark = true }) {
     )
 }
 
-export default function PhoneFrame({ children }) {
+export default function PhoneFrame({ children, dark = true }) {
     return (
         <div style={{
             width: 402, height: 874, borderRadius: 48, overflow: 'hidden',
-            position: 'relative', background: '#000',
+            position: 'relative', background: dark ? '#000' : '#F2F2F7',
             boxShadow: '0 40px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.12)',
             fontFamily: '-apple-system, system-ui, sans-serif',
             WebkitFontSmoothing: 'antialiased',
@@ -50,7 +50,7 @@ export default function PhoneFrame({ children }) {
                 position: 'absolute', top: 11, left: '50%', transform: 'translateX(-50%)',
                 width: 126, height: 37, borderRadius: 24, background: '#000', zIndex: 50,
             }} />
-            <StatusBar dark />
+            <StatusBar dark={dark} />
             {/* App content */}
             <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
                 {children}
@@ -63,7 +63,7 @@ export default function PhoneFrame({ children }) {
             }}>
                 <div style={{
                     width: 139, height: 5, borderRadius: 100,
-                    background: 'rgba(255,255,255,0.7)',
+                    background: dark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.25)',
                 }} />
             </div>
         </div>
