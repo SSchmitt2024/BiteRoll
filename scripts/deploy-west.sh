@@ -17,6 +17,10 @@ aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/S3-Media-West.yaml \
     --stack-name biteroll-s3-media-west \
     --region us-west-2
+
+echo "[ 1.5/4 ] Lambda code bucket (us-west-2)"
+aws s3 mb s3://biteroll-lambda-code-west --region us-west-2 2>/dev/null || true
+
 echo "[ 2/4 ] Secrets (us-west-2) — copy Google Maps key to west region"
 GOOGLE_KEY=$(aws secretsmanager get-secret-value \
     --secret-id biteroll/google-maps-api-key \
@@ -39,7 +43,7 @@ WEST_SECRET_ARN=$(aws secretsmanager describe-secret \
 echo "[ 3/4 ] Lambda (us-west-2)"
 cd ../lambda
 zip lambda.zip lambda.py
-aws s3 cp lambda.zip s3://biteroll-static-site-sawyer/lambda/lambda.zip --region us-east-2
+aws s3 cp lambda.zip s3://biteroll-lambda-code-west/lambda/lambda.zip --region us-west-2
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/Lambda.yaml \
     --stack-name biteroll-lambda \
@@ -47,10 +51,11 @@ aws cloudformation deploy --no-fail-on-empty-changeset \
     --region us-west-2 \
     --parameter-overrides \
       DynamoDBTableArn=arn:aws:dynamodb:us-west-2:640706953694:table/BiteRollRestaurants \
-      SecretsArn=$WEST_SECRET_ARN
+      SecretsArn=$WEST_SECRET_ARN \
+      LambdaCodeBucket=biteroll-lambda-code-west
 aws lambda update-function-code \
     --function-name biteroll-api \
-    --s3-bucket biteroll-static-site-sawyer \
+    --s3-bucket biteroll-lambda-code-west \
     --s3-key lambda/lambda.zip \
     --region us-west-2 \
     --query "LastUpdateStatus" \

@@ -11,6 +11,10 @@ Parameters:
         Type: String
         Default: ''
         Description: 'Secrets Manager ARN. Leave empty to use cross-stack import (east only).'
+    LambdaCodeBucket:
+        Type: String
+        Default: 'biteroll-static-site-sawyer'
+        Description: 'S3 bucket containing lambda.zip. Must be in the same region as the stack.'
 
 Conditions:
     UseDynamoImport: !Equals [!Ref DynamoDBTableArn, '']
@@ -59,7 +63,7 @@ Resources:
         Properties:
             FunctionName: biteroll-api
             Code:
-                S3Bucket: biteroll-static-site-sawyer
+                S3Bucket: !Ref LambdaCodeBucket
                 S3Key: lambda/lambda.zip
             Runtime: python3.12
             Handler: lambda.handler
