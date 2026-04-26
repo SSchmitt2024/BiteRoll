@@ -3,6 +3,7 @@
 //
 
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 
 import { COG_USER_POOL_ID, COG_CLIENT_ID } from '../aws-config'
@@ -122,6 +123,7 @@ export default function SignUp() {
                             {fieldErrors.confirm && <p className="auth-error">{fieldErrors.confirm}</p>}
                         </label>
                         <button type="submit" className="auth-submit">Create account</button>
+                        <Link to="/login" className="auth-link">Already have an account? Sign in</Link>
                     </form>
                 </div>
             </div>
