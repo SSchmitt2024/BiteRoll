@@ -92,6 +92,7 @@ def handle_feed(params, table, request_id):
     require_params(params, ['lat', 'lng'])
     radius = float(params.get('radius', 5000))
     google_radius = max(1.0, min(radius, 50000.0))
+    user_lat, user_lng = float(params['lat']), float(params['lng'])
 
     log('info', 'feed_request_started', requestId=request_id, radiusMeters=radius)
     api_key = get_api_key()
@@ -102,21 +103,29 @@ def handle_feed(params, table, request_id):
     dynamodb_hits = 0
     dynamodb_misses = 0
 
-    def restaurant_payload(place_id, item):
+    def item_distance_meters(item):
+        item_lat = item.get('lat')
+        item_lng = item.get('lng')
+        if item_lat is None or item_lng is None:
+            return None
+        return haversine(user_lat, user_lng, float(item_lat), float(item_lng))
+
+    def restaurant_payload(place_id, item, distance_meters):
         return {
             'placeId': place_id,
             'name': item.get('name', ''),
             'description': item.get('description', ''),
             'tags': item.get('tags', []),
             'videos': item.get('videos', []),
-            'likeCount': item.get('likeCount', 0)
+            'likeCount': item.get('likeCount', 0),
+            'distanceMeters': distance_meters
         }
 
     for place_id in place_ids:
         response = table.get_item(Key={'placeId': place_id})
         if 'Item' in response:
             item = response['Item']
-            results.append(restaurant_payload(place_id, item))
+            results.append(restaurant_payload(place_id, item, item_distance_meters(item)))
             found_ids.add(place_id)
             dynamodb_hits += 1
         else:
@@ -135,7 +144,6 @@ def handle_feed(params, table, request_id):
     scan_response = table.scan()
     scanned_count = scan_response.get('ScannedCount', 0)
     seeded_matches = 0
-    user_lat, user_lng = float(params['lat']), float(params['lng'])
 
     for item in scan_response.get('Items', []):
         pid = item['placeId']
@@ -147,7 +155,7 @@ def handle_feed(params, table, request_id):
             continue
         dist = haversine(user_lat, user_lng, float(item_lat), float(item_lng))
         if dist <= radius:
-            results.append(restaurant_payload(pid, item))
+            results.append(restaurant_payload(pid, item, dist))
             seeded_matches += 1
 
     log(

@@ -5,9 +5,19 @@ import { authHeaders } from '../utils/apiAuth.js'
 import { apiFetch } from '../utils/apiFetch.js'
 import { HeartIcon, MenuIcon, CloseIcon } from './Icons.jsx'
 
+const METERS_PER_MILE = 1609.344
+
+function formatDistance(distanceMeters) {
+    if (distanceMeters == null) return null
+    const miles = distanceMeters / METERS_PER_MILE
+    if (miles < 0.1) return '<0.1 mi'
+    return `${miles.toFixed(1)} mi`
+}
+
 export default function SwipeCard({ card, active, liked, likeCount, onToggleLike }) {
     const isFallback = card._isFallback
     const cardTags = Array.isArray(card.tags) ? card.tags.slice(0, 3) : []
+    const distanceLabel = formatDistance(card.distanceMeters)
     const [menu, setMenu] = useState(null)
     const [menuOpen, setMenuOpen] = useState(false)
     const [menuLoading, setMenuLoading] = useState(false)
@@ -106,6 +116,9 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
                     <div className="restaurant-pill">
                         <span className="pill-initial">{card.name?.[0] || 'B'}</span>
                         <span className="pill-name">{card.name}</span>
+                        {distanceLabel && (
+                            <span className="pill-distance">{distanceLabel}</span>
+                        )}
                     </div>
                     {card.description && (
                         <p className="card-description">{card.description}</p>
