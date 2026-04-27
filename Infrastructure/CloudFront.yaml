@@ -12,9 +12,14 @@ Parameters:
         Type: String
         Default: ''
         Description: 'ACM certificate ARN in us-east-1 covering AppDomainName. Required when AppDomainName is set.'
+    WebACLArn:
+        Type: String
+        Default: ''
+        Description: 'Optional AWS WAFv2 Web ACL ARN to associate with this CloudFront distribution.'
 
 Conditions:
     HasCustomDomain: !Not [!Equals [!Ref AppDomainName, '']]
+    HasWebACL: !Not [!Equals [!Ref WebACLArn, '']]
 
 Resources:
     BiteRollCloudFront:
@@ -22,6 +27,10 @@ Resources:
         Properties:
             DistributionConfig:
                 Comment: "BiteRoll"
+                WebACLId: !If
+                  - HasWebACL
+                  - !Ref WebACLArn
+                  - !Ref AWS::NoValue
                 Aliases: !If
                   - HasCustomDomain
                   - [!Ref AppDomainName]
@@ -89,7 +98,6 @@ Outputs:
         Value: !GetAtt BiteRollCloudFront.DomainName
         Export:
             Name: CloudFrontDomainName
-
 
 
 

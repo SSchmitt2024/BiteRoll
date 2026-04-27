@@ -61,9 +61,9 @@ function BrandSide() {
 }
 
 function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlaces,
-    likeDeltas, handleToggleLike, radiusMiles, setRadiusMiles, setLoading }) {
+    likeDeltas, handleToggleLike, radiusMiles, setRadiusMiles, setLoading, onSignOut }) {
 
-    const cardHeight = 874
+    const [cardHeight, setCardHeight] = useState(874)
     const swiped = useRef(false)
     const feedRef = useRef(null)
     const [{ y }, api] = useSpring(() => ({ y: 0 }))
@@ -93,6 +93,24 @@ function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlac
             }
         })
     }, [api, cardHeight, currentIndex, videoCards, setCurrentIndex])
+
+    useEffect(() => {
+        const el = feedRef.current
+        if (!el) return
+
+        function updateCardHeight() {
+            setCardHeight(el.clientHeight || 874)
+        }
+
+        updateCardHeight()
+        const observer = new ResizeObserver(updateCardHeight)
+        observer.observe(el)
+        window.addEventListener('resize', updateCardHeight)
+        return () => {
+            observer.disconnect()
+            window.removeEventListener('resize', updateCardHeight)
+        }
+    }, [])
 
     useEffect(() => {
         const el = feedRef.current
@@ -143,16 +161,21 @@ function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlac
         </select>
     )
 
-    const feedBrand = (
-        <div className="feed-brand" aria-label="BiteRoll">
-            <img src="/logo2.png" alt="" />
+    const feedTopbar = (
+        <div className="feed-topbar">
+            <div className="feed-brand" aria-label="BiteRoll">
+                <img src="/logo2.png" alt="" />
+            </div>
+            <button type="button" className="feed-signout" onClick={onSignOut}>
+                Sign out
+            </button>
         </div>
     )
 
     if (loading) {
         return (
-            <div className="feed-inner">
-                {feedBrand}
+            <div className="feed-inner" ref={feedRef}>
+                {feedTopbar}
                 {rangeFilter}
                 <div className="loading-screen">
                     <div className="loading-brand">BiteRoll</div>
@@ -164,42 +187,40 @@ function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlac
     }
 
     const cards = videoCards.length > 0 ? videoCards : [FALLBACK_CARD]
-    const prevIndex = (currentIndex - 1 + cards.length) % cards.length
-    const nextIndex = (currentIndex + 1) % cards.length
+    const len = cards.length
 
     return (
         <div className="feed-inner" ref={feedRef} {...bind()} style={{ touchAction: 'none' }} tabIndex={-1}>
-            {feedBrand}
-            <AnimatedFeedCard className="feed-card" style={{ y: y.to(v => v - cardHeight) }}>
-                <SwipeCard
-                    key={`prev-${prevIndex}`}
-                    card={cards[prevIndex]}
-                    active={false}
-                    liked={!!likedPlaces[cards[prevIndex].placeId]}
-                    likeCount={displayedLikeCount(cards[prevIndex])}
-                    onToggleLike={handleToggleLike}
-                />
-            </AnimatedFeedCard>
-            <AnimatedFeedCard className="feed-card" style={{ y }}>
-                <SwipeCard
-                    key={`current-${currentIndex}`}
-                    card={cards[currentIndex]}
-                    active={true}
-                    liked={!!likedPlaces[cards[currentIndex].placeId]}
-                    likeCount={displayedLikeCount(cards[currentIndex])}
-                    onToggleLike={handleToggleLike}
-                />
-            </AnimatedFeedCard>
-            <AnimatedFeedCard className="feed-card" style={{ y: y.to(v => v + cardHeight) }}>
-                <SwipeCard
-                    key={`next-${nextIndex}`}
-                    card={cards[nextIndex]}
-                    active={false}
-                    liked={!!likedPlaces[cards[nextIndex].placeId]}
-                    likeCount={displayedLikeCount(cards[nextIndex])}
-                    onToggleLike={handleToggleLike}
-                />
-            </AnimatedFeedCard>
+            {feedTopbar}
+            {cards.map((card, i) => {
+                let style
+                let active = false
+                if (i === currentIndex) {
+                    style = { y }
+                    active = true
+                } else if (i === (currentIndex + 1) % len) {
+                    style = { y: y.to(v => v + cardHeight) }
+                } else if (i === (currentIndex - 1 + len) % len) {
+                    style = { y: y.to(v => v - cardHeight) }
+                } else {
+                    return null
+                }
+                return (
+                    <AnimatedFeedCard
+                        key={`${card.placeId}-${card.video}`}
+                        className="feed-card"
+                        style={style}
+                    >
+                        <SwipeCard
+                            card={card}
+                            active={active}
+                            liked={!!likedPlaces[card.placeId]}
+                            likeCount={displayedLikeCount(card)}
+                            onToggleLike={handleToggleLike}
+                        />
+                    </AnimatedFeedCard>
+                )
+            })}
             {rangeFilter}
         </div>
     )
@@ -300,9 +321,6 @@ export default function Feed() {
 
     return (
         <div className="feed-page">
-            <button type="button" className="feed-signout" onClick={handleSignOut}>
-                Sign out
-            </button>
             <div className="stage">
                 <BrandSide />
                 <div className="phone-side">
@@ -318,6 +336,7 @@ export default function Feed() {
                             radiusMiles={radiusMiles}
                             setRadiusMiles={setRadiusMiles}
                             setLoading={setLoading}
+                            onSignOut={handleSignOut}
                         />
                     </PhoneFrame>
                 </div>

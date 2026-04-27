@@ -1,3 +1,9 @@
+import { useEffect, useState } from 'react'
+
+const PHONE_WIDTH = 402
+const PHONE_HEIGHT = 874
+const MOBILE_BREAKPOINT = 880
+
 function StatusBar({ dark = true }) {
     const c = dark ? '#fff' : '#000'
     return (
@@ -36,35 +42,57 @@ function StatusBar({ dark = true }) {
 }
 
 export default function PhoneFrame({ children, dark = true }) {
+    const [isMobile, setIsMobile] = useState(false)
+
+    useEffect(() => {
+        function updateViewportMode() {
+            setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT)
+        }
+
+        updateViewportMode()
+        window.addEventListener('resize', updateViewportMode)
+        return () => window.removeEventListener('resize', updateViewportMode)
+    }, [])
+
     return (
-        <div style={{
-            width: 402, height: 874, borderRadius: 48, overflow: 'hidden',
-            position: 'relative', background: dark ? '#000' : '#F2F2F7',
-            boxShadow: '0 40px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.12)',
-            fontFamily: '-apple-system, system-ui, sans-serif',
-            WebkitFontSmoothing: 'antialiased',
-            flexShrink: 0,
+        <div className="phone-frame-shell" style={{
+            width: isMobile ? '100vw' : PHONE_WIDTH,
+            height: isMobile ? '100dvh' : PHONE_HEIGHT,
         }}>
-            {/* Dynamic Island */}
-            <div style={{
-                position: 'absolute', top: 11, left: '50%', transform: 'translateX(-50%)',
-                width: 126, height: 37, borderRadius: 24, background: '#000', zIndex: 50,
-            }} />
-            <StatusBar dark={dark} />
-            {/* App content */}
-            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-                {children}
-            </div>
-            {/* Home indicator */}
-            <div style={{
-                position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 60,
-                height: 34, display: 'flex', justifyContent: 'center', alignItems: 'flex-end',
-                paddingBottom: 8, pointerEvents: 'none',
+            <div className="phone-frame" style={{
+                width: isMobile ? '100%' : PHONE_WIDTH,
+                height: isMobile ? '100%' : PHONE_HEIGHT,
+                borderRadius: isMobile ? 0 : 48,
+                overflow: 'hidden',
+                position: 'relative',
+                background: dark ? '#000' : '#F2F2F7',
+                boxShadow: isMobile ? 'none' : '0 40px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.12)',
+                fontFamily: '-apple-system, system-ui, sans-serif',
+                WebkitFontSmoothing: 'antialiased',
             }}>
-                <div style={{
-                    width: 139, height: 5, borderRadius: 100,
-                    background: dark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.25)',
+                {/* Dynamic Island */}
+                <div className="phone-dynamic-island" style={{
+                    position: 'absolute', top: 11, left: '50%', transform: 'translateX(-50%)',
+                    width: 126, height: 37, borderRadius: 24, background: '#000', zIndex: 50,
                 }} />
+                <div className="phone-status-bar">
+                    <StatusBar dark={dark} />
+                </div>
+                {/* App content */}
+                <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+                    {children}
+                </div>
+                {/* Home indicator */}
+                <div className="phone-home-indicator" style={{
+                    position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 60,
+                    height: 34, display: isMobile ? 'none' : 'flex', justifyContent: 'center', alignItems: 'flex-end',
+                    paddingBottom: 8, pointerEvents: 'none',
+                }}>
+                    <div style={{
+                        width: 139, height: 5, borderRadius: 100,
+                        background: dark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.25)',
+                    }} />
+                </div>
             </div>
         </div>
     )
