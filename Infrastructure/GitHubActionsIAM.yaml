@@ -10,7 +10,7 @@ Parameters:
         Description: IAM user used by GitHub Actions repository secrets
 
 Resources:
-    GitHubActionsDeployPolicy:
+    GitHubActionsDeployManagedPolicy:
         Type: 'AWS::IAM::ManagedPolicy'
         Properties:
             ManagedPolicyName: BiteRollGitHubActionsDeploy
