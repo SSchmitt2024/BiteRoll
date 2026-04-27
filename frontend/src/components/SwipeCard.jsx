@@ -80,6 +80,10 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
         onToggleLike(card.placeId, !liked)
     }
 
+    function stopMenuInteraction(e) {
+        e.stopPropagation()
+    }
+
     return (
         <div className="swipe-card" onClick={handleDoubleTap}>
             <video
@@ -136,8 +140,21 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
                 <>
                     <div className="menu-backdrop"
                         onClick={() => setMenuOpen(false)}
+                        onPointerDown={stopMenuInteraction}
+                        onPointerMove={stopMenuInteraction}
+                        onTouchStart={stopMenuInteraction}
+                        onTouchMove={stopMenuInteraction}
+                        onWheel={stopMenuInteraction}
                         style={{ opacity: 1 }} />
-                    <div className="menu-sheet" onClick={e => e.stopPropagation()}>
+                    <div
+                        className="menu-sheet"
+                        onClick={stopMenuInteraction}
+                        onPointerDown={stopMenuInteraction}
+                        onPointerMove={stopMenuInteraction}
+                        onTouchStart={stopMenuInteraction}
+                        onTouchMove={stopMenuInteraction}
+                        onWheel={stopMenuInteraction}
+                    >
                         <div className="menu-handle" />
                         <div className="menu-header">
                             <div className="menu-restaurant-icon">

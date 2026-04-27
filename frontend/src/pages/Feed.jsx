@@ -61,7 +61,7 @@ function BrandSide() {
 }
 
 function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlaces,
-    likeDeltas, handleToggleLike, radiusMiles, setRadiusMiles, setLoading }) {
+    likeDeltas, handleToggleLike, radiusMiles, setRadiusMiles, setLoading, onSignOut }) {
 
     const cardHeight = 874
     const swiped = useRef(false)
@@ -143,16 +143,21 @@ function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlac
         </select>
     )
 
-    const feedBrand = (
-        <div className="feed-brand" aria-label="BiteRoll">
-            <img src="/logo2.png" alt="" />
+    const feedTopbar = (
+        <div className="feed-topbar">
+            <div className="feed-brand" aria-label="BiteRoll">
+                <img src="/logo2.png" alt="" />
+            </div>
+            <button type="button" className="feed-signout" onClick={onSignOut}>
+                Sign out
+            </button>
         </div>
     )
 
     if (loading) {
         return (
             <div className="feed-inner">
-                {feedBrand}
+                {feedTopbar}
                 {rangeFilter}
                 <div className="loading-screen">
                     <div className="loading-brand">BiteRoll</div>
@@ -169,7 +174,7 @@ function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlac
 
     return (
         <div className="feed-inner" ref={feedRef} {...bind()} style={{ touchAction: 'none' }} tabIndex={-1}>
-            {feedBrand}
+            {feedTopbar}
             <AnimatedFeedCard className="feed-card" style={{ y: y.to(v => v - cardHeight) }}>
                 <SwipeCard
                     key={`prev-${prevIndex}`}
@@ -300,9 +305,6 @@ export default function Feed() {
 
     return (
         <div className="feed-page">
-            <button type="button" className="feed-signout" onClick={handleSignOut}>
-                Sign out
-            </button>
             <div className="stage">
                 <BrandSide />
                 <div className="phone-side">
@@ -318,6 +320,7 @@ export default function Feed() {
                             radiusMiles={radiusMiles}
                             setRadiusMiles={setRadiusMiles}
                             setLoading={setLoading}
+                            onSignOut={handleSignOut}
                         />
                     </PhoneFrame>
                 </div>
