@@ -26,12 +26,28 @@ aws cloudformation deploy --no-fail-on-empty-changeset \
     --stack-name biteroll-s3-media \
     --capabilities CAPABILITY_NAMED_IAM
 
-echo "[ 5/14 ] CloudFront"
+echo "[ 5/15 ] WAF"
+aws cloudformation deploy --no-fail-on-empty-changeset \
+    --template-file ../Infrastructure/WAF.yaml \
+    --stack-name biteroll-waf \
+    --region us-east-1
+
+WAF_WEB_ACL_ARN=$(aws cloudformation list-exports \
+    --region us-east-1 \
+    --query "Exports[?Name=='BiteRollCloudFrontWebACLArn'].Value" \
+    --output text)
+if [ -z "$WAF_WEB_ACL_ARN" ] || [ "$WAF_WEB_ACL_ARN" = "None" ]; then
+    echo "Could not resolve WAF Web ACL ARN from stack biteroll-waf"
+    exit 1
+fi
+
+echo "[ 6/15 ] CloudFront"
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/CloudFront.yaml \
-    --stack-name biteroll-cloudfront
+    --stack-name biteroll-cloudfront \
+    --parameter-overrides WebACLArn="$WAF_WEB_ACL_ARN"
 
-echo "[ 6/14 ] Bucket Policy"
+echo "[ 7/15 ] Bucket Policy"
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/BucketPolicy.yaml \
     --stack-name biteroll-s3-policy
@@ -53,12 +69,12 @@ INVALIDATION_ID=$(aws cloudfront create-invalidation \
     --no-cli-pager)
 echo "Created CloudFront invalidation $INVALIDATION_ID"
 
-echo "[ 7/14 ] DynamoDB"
+echo "[ 8/15 ] DynamoDB"
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/DynamoDB.yaml \
     --stack-name biteroll-DynamoDB
 
-echo "[ 8/14 ] Lambda"
+echo "[ 9/15 ] Lambda"
 cd ../lambda
 zip lambda.zip lambda.py
 aws s3 cp lambda.zip s3://biteroll-static-site-sawyer/lambda/lambda.zip
@@ -74,7 +90,7 @@ aws lambda update-function-code \
     --output text \
     --no-cli-pager
 
-echo "[ 9/14 ] API Gateway"
+echo "[ 10/15 ] API Gateway"
 cd ../scripts
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/APIGateway.yaml \
@@ -108,30 +124,30 @@ echo "VITE_COGNITO_CLIENT_ID=$VITE_COGNITO_CLIENT_ID" >> ../frontend/.env
 echo "VITE_API_BASE_URL=$VITE_API_BASE_URL" >> ../frontend/.env
 echo "VITE_API_FAILOVER_URL=$VITE_API_FAILOVER_URL" >> ../frontend/.env
 
-echo "[ 10/14 ] Frontend build and sync"
+echo "[ 11/15 ] Frontend build and sync"
 cd ../frontend
 npm ci
 npm run build
 aws s3 sync dist s3://biteroll-static-site-sawyer/ --delete --exclude "lambda/*"
 
-echo "[ 11/14 ] SNS"
+echo "[ 12/15 ] SNS"
 cd ../scripts
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/SNSTopic.yaml \
     --stack-name biteroll-sns-topic \
     --parameter-overrides AlertEmail=sawyerals.nh@gmail.com
 
-echo "[ 12/14 ] CloudWatch"
+echo "[ 13/15 ] CloudWatch"
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/CloudWatch.yaml \
     --stack-name biteroll-cloudwatch
 
-echo "[ 13/14 ] CloudTrail"
+echo "[ 14/15 ] CloudTrail"
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/CloudTrail.yaml \
     --stack-name biteroll-cloudtrail
 
-echo "[ 14/14 ] Budget"
+echo "[ 15/15 ] Budget"
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/Budget.yaml \
     --stack-name biteroll-budget \
