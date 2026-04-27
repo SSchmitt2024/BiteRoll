@@ -11,9 +11,9 @@ Parameters:
 
 Resources:
     GitHubActionsDeployPolicy:
-        Type: 'AWS::IAM::Policy'
+        Type: 'AWS::IAM::ManagedPolicy'
         Properties:
-            PolicyName: BiteRollGitHubActionsDeploy
+            ManagedPolicyName: BiteRollGitHubActionsDeploy
             Users:
                 - !Ref GitHubActionsUserName
             PolicyDocument:
