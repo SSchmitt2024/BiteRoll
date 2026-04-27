@@ -3,7 +3,7 @@ import '../../index.css'
 import { logError, logInfo, logWarn } from '../utils/logger.js'
 import { authHeaders } from '../utils/apiAuth.js'
 import { apiFetch } from '../utils/apiFetch.js'
-import { HeartIcon, MenuIcon, CloseIcon } from './Icons.jsx'
+import { HeartIcon, MenuIcon, OrderIcon, CloseIcon } from './Icons.jsx'
 
 const METERS_PER_MILE = 1609.344
 
@@ -93,6 +93,16 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
         onToggleLike(card.placeId, !liked)
     }
 
+    function handleOrder(e) {
+        e.stopPropagation()
+        if (!card.orderURL) {
+            logWarn('order_link_missing', { placeId: card.placeId })
+            return
+        }
+        logInfo('order_link_opened', { placeId: card.placeId })
+        window.open(card.orderURL, '_blank', 'noopener,noreferrer')
+    }
+
     function stopMenuInteraction(e) {
         e.stopPropagation()
     }
@@ -143,6 +153,12 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
                         <MenuIcon size={44} />
                         <span className="rail-label">Menu</span>
                     </button>
+                    {card.orderURL && (
+                        <button className="rail-btn" onClick={handleOrder}>
+                            <OrderIcon size={44} />
+                            <span className="rail-label">Order</span>
+                        </button>
+                    )}
                 </div>
             )}
 

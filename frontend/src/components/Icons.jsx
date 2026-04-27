@@ -19,6 +19,16 @@ export function MenuIcon({ size = 32, color = '#fff' }) {
     )
 }
 
+export function OrderIcon({ size = 32, color = '#fff' }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 32 32" fill="none"
+            stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M8 11h16l-1.5 13a2 2 0 0 1-2 1.8H11.5a2 2 0 0 1-2-1.8L8 11z"/>
+            <path d="M12 11V8a4 4 0 0 1 8 0v3"/>
+        </svg>
+    )
+}
+
 export function CloseIcon({ size = 22, color = '#1F2330' }) {
     return (
         <svg width={size} height={size} viewBox="0 0 22 22" fill="none"

@@ -118,7 +118,8 @@ def handle_feed(params, table, request_id):
             'tags': item.get('tags', []),
             'videos': item.get('videos', []),
             'likeCount': item.get('likeCount', 0),
-            'distanceMeters': distance_meters
+            'distanceMeters': distance_meters,
+            'orderURL': item.get('orderURL', '')
         }
 
     for place_id in place_ids:
