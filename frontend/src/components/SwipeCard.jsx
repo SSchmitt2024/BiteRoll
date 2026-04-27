@@ -17,12 +17,15 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
     const lastTap = useRef(0)
 
     useEffect(() => {
+        const video = videoRef.current
+        if (!video) return
         if (active && !menuOpen) {
-            videoRef.current?.play().catch(error => {
+            video.play().catch(error => {
                 logWarn('video_autoplay_failed', { placeId: card.placeId, message: error.message })
             })
         } else {
-            videoRef.current?.pause()
+            video.pause()
+            try { video.currentTime = 0 } catch { /* ignore */ }
         }
     }, [active, card.placeId, menuOpen])
 
@@ -92,6 +95,7 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
                 loop
                 muted
                 playsInline
+                autoPlay
                 preload="auto"
             />
 
