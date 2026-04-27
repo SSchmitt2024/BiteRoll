@@ -87,6 +87,10 @@ export VITE_COGNITO_CLIENT_ID=$(aws cloudformation list-exports \
 export VITE_API_BASE_URL=$(aws cloudformation list-exports \
     --query "Exports[?Name=='ApiInvokeUrl-us-east-2'].Value" --output text)
 
+export VITE_API_FAILOVER_URL=$(aws cloudformation list-exports \
+    --region us-west-2 \
+    --query "Exports[?Name=='ApiInvokeUrl-us-west-2'].Value" --output text 2>/dev/null || echo "")
+
 if [ -z "$VITE_COGNITO_USER_POOL_ID" ] || [ "$VITE_COGNITO_USER_POOL_ID" = "None" ] || \
    [ -z "$VITE_COGNITO_CLIENT_ID" ] || [ "$VITE_COGNITO_CLIENT_ID" = "None" ] || \
    [ -z "$VITE_API_BASE_URL" ] || [ "$VITE_API_BASE_URL" = "None" ]; then
@@ -94,9 +98,15 @@ if [ -z "$VITE_COGNITO_USER_POOL_ID" ] || [ "$VITE_COGNITO_USER_POOL_ID" = "None
     exit 1
 fi
 
+if [ -z "$VITE_API_FAILOVER_URL" ] || [ "$VITE_API_FAILOVER_URL" = "None" ]; then
+    echo "WARNING: us-west-2 API Gateway not found — client-side failover disabled"
+    VITE_API_FAILOVER_URL=""
+fi
+
 echo "VITE_COGNITO_USER_POOL_ID=$VITE_COGNITO_USER_POOL_ID" > ../frontend/.env
 echo "VITE_COGNITO_CLIENT_ID=$VITE_COGNITO_CLIENT_ID" >> ../frontend/.env
 echo "VITE_API_BASE_URL=$VITE_API_BASE_URL" >> ../frontend/.env
+echo "VITE_API_FAILOVER_URL=$VITE_API_FAILOVER_URL" >> ../frontend/.env
 
 echo "[ 10/14 ] Frontend build and sync"
 cd ../frontend

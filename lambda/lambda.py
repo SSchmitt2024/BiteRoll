@@ -102,16 +102,21 @@ def handle_feed(params, table, request_id):
     dynamodb_hits = 0
     dynamodb_misses = 0
 
+    def restaurant_payload(place_id, item):
+        return {
+            'placeId': place_id,
+            'name': item.get('name', ''),
+            'description': item.get('description', ''),
+            'tags': item.get('tags', []),
+            'videos': item.get('videos', []),
+            'likeCount': item.get('likeCount', 0)
+        }
+
     for place_id in place_ids:
         response = table.get_item(Key={'placeId': place_id})
         if 'Item' in response:
             item = response['Item']
-            results.append({
-                'placeId': place_id,
-                'name': item.get('name', ''),
-                'videos': item.get('videos', []),
-                'likeCount': item.get('likeCount', 0)
-            })
+            results.append(restaurant_payload(place_id, item))
             found_ids.add(place_id)
             dynamodb_hits += 1
         else:
@@ -142,12 +147,7 @@ def handle_feed(params, table, request_id):
             continue
         dist = haversine(user_lat, user_lng, float(item_lat), float(item_lng))
         if dist <= radius:
-            results.append({
-                'placeId': pid,
-                'name': item.get('name', ''),
-                'videos': item.get('videos', []),
-                'likeCount': item.get('likeCount', 0)
-            })
+            results.append(restaurant_payload(pid, item))
             seeded_matches += 1
 
     log(
