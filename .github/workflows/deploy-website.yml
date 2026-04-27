@@ -77,3 +77,7 @@ jobs:
       - name: Deploy infrastructure, backend, and frontend
         run: bash deploy.sh
         working-directory: scripts
+
+      - name: Deploy west region backend
+        run: bash deploy-west.sh
+        working-directory: scripts

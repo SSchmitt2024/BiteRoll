@@ -92,6 +92,17 @@ Resources:
                           - resourcegroupstaggingapi:GetResources
                           - sns:*
                       Resource: '*'
+                    - Sid: ManageBiteRollSecrets
+                      Effect: Allow
+                      Action:
+                          - secretsmanager:CreateSecret
+                          - secretsmanager:DescribeSecret
+                          - secretsmanager:GetSecretValue
+                          - secretsmanager:PutSecretValue
+                          - secretsmanager:TagResource
+                          - secretsmanager:UpdateSecret
+                      Resource:
+                          - !Sub 'arn:aws:secretsmanager:*:${AWS::AccountId}:secret:biteroll/*'
                     - Sid: ManageBiteRollIamRoles
                       Effect: Allow
                       Action:
