@@ -12,9 +12,14 @@ Parameters:
         Type: String
         Default: ''
         Description: 'ACM certificate ARN in THIS region covering ApiDomainName. Required when ApiDomainName is set.'
+    CognitoUserPoolArn:
+        Type: String
+        Default: ''
+        Description: 'Cognito user pool ARN for API authorization. Leave empty to use same-region export.'
 
 Conditions:
     HasCustomDomain: !Not [!Equals [!Ref ApiDomainName, '']]
+    UseCognitoImport: !Equals [!Ref CognitoUserPoolArn, '']
 
 Resources:
     API:
@@ -30,9 +35,12 @@ Resources:
             RestApiId: !Ref API
             IdentitySource: method.request.header.Authorization
             ProviderARNs:
-                - !Sub
-                  - 'arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}'
-                  - UserPoolId: !ImportValue CognitoUserPoolID
+                - !If
+                  - UseCognitoImport
+                  - !Sub
+                    - 'arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}'
+                    - UserPoolId: !ImportValue CognitoUserPoolID
+                  - !Ref CognitoUserPoolArn
 
     # /feed
     FeedResource:

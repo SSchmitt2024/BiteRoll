@@ -39,6 +39,11 @@ WEST_SECRET_ARN=$(aws secretsmanager describe-secret \
     --secret-id biteroll/google-maps-api-key \
     --region us-west-2 \
     --query "ARN" --output text)
+COGNITO_USER_POOL_ID=$(aws cloudformation list-exports \
+    --region us-east-2 \
+    --query "Exports[?Name=='CognitoUserPoolID'].Value" \
+    --output text)
+COGNITO_USER_POOL_ARN="arn:aws:cognito-idp:us-east-2:640706953694:userpool/$COGNITO_USER_POOL_ID"
 
 echo "[ 3/4 ] Lambda (us-west-2)"
 cd ../lambda
@@ -66,13 +71,15 @@ echo "[ 4/4 ] API Gateway (us-west-2)"
 cd ../scripts
 PARAM_OVERRIDES=""
 if [ -n "$API_DOMAIN" ] && [ -n "$CERT_ARN_WEST" ]; then
-    PARAM_OVERRIDES="--parameter-overrides ApiDomainName=$API_DOMAIN RegionalCertArn=$CERT_ARN_WEST"
+    PARAM_OVERRIDES="ApiDomainName=$API_DOMAIN RegionalCertArn=$CERT_ARN_WEST"
 fi
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/APIGateway.yaml \
     --stack-name biteroll-api-gateway \
     --region us-west-2 \
-    $PARAM_OVERRIDES
+    --parameter-overrides \
+      CognitoUserPoolArn=$COGNITO_USER_POOL_ARN \
+      $PARAM_OVERRIDES
 
 echo ""
 echo "us-west-2 deploy complete."
