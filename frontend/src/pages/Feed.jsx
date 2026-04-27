@@ -40,7 +40,7 @@ function BrandSide() {
                 <span className="brand-dot" />
             </h1>
             <p className="brand-tagline">
-                Matching your hunger to your next favorite restaurant — one swipe at a time.
+                Matching your hunger to your next favorite restaurant, one swipe at a time.
             </p>
             <div className="brand-features">
                 <div className="brand-feature">
