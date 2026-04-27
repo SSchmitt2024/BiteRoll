@@ -1,0 +1,65 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'AWS WAF Web ACL for BiteRoll CloudFront protection'
+
+Resources:
+    BiteRollWebACL:
+        Type: AWS::WAFv2::WebACL
+        Properties:
+            Name: biteroll-cloudfront-waf
+            Description: Blocks common web exploits and known bad traffic before CloudFront reaches origins.
+            Scope: CLOUDFRONT
+            DefaultAction:
+                Allow: {}
+            VisibilityConfig:
+                CloudWatchMetricsEnabled: true
+                MetricName: BiteRollCloudFrontWAF
+                SampledRequestsEnabled: true
+            Rules:
+                - Name: AWSManagedRulesAmazonIpReputationList
+                  Priority: 0
+                  OverrideAction:
+                      None: {}
+                  Statement:
+                      ManagedRuleGroupStatement:
+                          VendorName: AWS
+                          Name: AWSManagedRulesAmazonIpReputationList
+                  VisibilityConfig:
+                      CloudWatchMetricsEnabled: true
+                      MetricName: BiteRollIpReputation
+                      SampledRequestsEnabled: true
+                - Name: AWSManagedRulesKnownBadInputsRuleSet
+                  Priority: 1
+                  OverrideAction:
+                      None: {}
+                  Statement:
+                      ManagedRuleGroupStatement:
+                          VendorName: AWS
+                          Name: AWSManagedRulesKnownBadInputsRuleSet
+                  VisibilityConfig:
+                      CloudWatchMetricsEnabled: true
+                      MetricName: BiteRollKnownBadInputs
+                      SampledRequestsEnabled: true
+                - Name: AWSManagedRulesCommonRuleSet
+                  Priority: 2
+                  OverrideAction:
+                      None: {}
+                  Statement:
+                      ManagedRuleGroupStatement:
+                          VendorName: AWS
+                          Name: AWSManagedRulesCommonRuleSet
+                  VisibilityConfig:
+                      CloudWatchMetricsEnabled: true
+                      MetricName: BiteRollCommonRules
+                      SampledRequestsEnabled: true
+            Tags:
+                - Key: Project
+                  Value: BiteRoll
+
+Outputs:
+    BiteRollWebACLArn:
+        Description: ARN for the CloudFront-scoped BiteRoll WAF Web ACL
+        Value: !GetAtt BiteRollWebACL.Arn
+        Export:
+            Name: BiteRollCloudFrontWebACLArn

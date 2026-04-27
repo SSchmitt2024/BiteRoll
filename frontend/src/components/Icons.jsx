@@ -13,8 +13,8 @@ export function MenuIcon({ size = 32, color = '#fff' }) {
     return (
         <svg width={size} height={size} viewBox="0 0 32 32" fill="none"
             stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M8 5h12a2 2 0 0 1 2 2v18l-3-2-3 2-3-2-3 2-3-2-2 2V7a2 2 0 0 1 2-2z"/>
-            <path d="M11 11h8M11 15h8M11 19h5"/>
+            <path d="M10 5h12a2 2 0 0 1 2 2v18l-3-2-3 2-3-2-3 2-4-2V7a2 2 0 0 1 2-2z"/>
+            <path d="M13 11h8M13 15h8M13 19h5"/>
         </svg>
     )
 }
