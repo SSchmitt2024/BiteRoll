@@ -3,6 +3,8 @@
 
 BiteRoll is a Tik-tok like application that uses a swipe based discovery method. The primary goal is linking hungry people, to local, availible, highly rated restaurants. This projects goal is to educate me as much as possible in different AWS services through creating an end-to-end application.
 
+
+Finished Project: I just finished my BiteRoll project and I'm really happy with how it turned out. I'm happy to say that I coded a large majority of it (aside from frontend which was origianlly me until I wanted it to look... good... This and all the js and some templates) I learned a ton and am happy to move onto the next project
 ____________________________________________________________________________________________________________________________
 
 ## Stack
