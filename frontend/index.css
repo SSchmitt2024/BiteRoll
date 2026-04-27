@@ -346,17 +346,18 @@ html, body {
     }
 
     .phone-status-bar,
-    .phone-dynamic-island {
+    .phone-dynamic-island,
+    .phone-home-indicator {
         display: none;
     }
 
     .feed-topbar {
-        top: 14px;
+        top: calc(env(safe-area-inset-top, 0px) + 14px);
         left: 14px;
     }
 
     .range-filter {
-        top: 18px;
+        top: calc(env(safe-area-inset-top, 0px) + 18px);
     }
 }
 

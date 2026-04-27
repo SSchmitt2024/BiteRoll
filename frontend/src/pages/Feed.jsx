@@ -63,7 +63,7 @@ function BrandSide() {
 function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlaces,
     likeDeltas, handleToggleLike, radiusMiles, setRadiusMiles, setLoading, onSignOut }) {
 
-    const cardHeight = 874
+    const [cardHeight, setCardHeight] = useState(874)
     const swiped = useRef(false)
     const feedRef = useRef(null)
     const [{ y }, api] = useSpring(() => ({ y: 0 }))
@@ -93,6 +93,24 @@ function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlac
             }
         })
     }, [api, cardHeight, currentIndex, videoCards, setCurrentIndex])
+
+    useEffect(() => {
+        const el = feedRef.current
+        if (!el) return
+
+        function updateCardHeight() {
+            setCardHeight(el.clientHeight || 874)
+        }
+
+        updateCardHeight()
+        const observer = new ResizeObserver(updateCardHeight)
+        observer.observe(el)
+        window.addEventListener('resize', updateCardHeight)
+        return () => {
+            observer.disconnect()
+            window.removeEventListener('resize', updateCardHeight)
+        }
+    }, [])
 
     useEffect(() => {
         const el = feedRef.current
@@ -156,7 +174,7 @@ function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlac
 
     if (loading) {
         return (
-            <div className="feed-inner">
+            <div className="feed-inner" ref={feedRef}>
                 {feedTopbar}
                 {rangeFilter}
                 <div className="loading-screen">

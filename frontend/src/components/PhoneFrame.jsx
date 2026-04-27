@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 const PHONE_WIDTH = 402
 const PHONE_HEIGHT = 874
 const MOBILE_BREAKPOINT = 880
-const MOBILE_GUTTER = 16
 
 function StatusBar({ dark = true }) {
     const c = dark ? '#fff' : '#000'
@@ -43,46 +42,33 @@ function StatusBar({ dark = true }) {
 }
 
 export default function PhoneFrame({ children, dark = true }) {
-    const [scale, setScale] = useState(1)
+    const [isMobile, setIsMobile] = useState(false)
 
     useEffect(() => {
-        function updateScale() {
-            const width = window.innerWidth
-            const height = window.innerHeight
-            if (width > MOBILE_BREAKPOINT) {
-                setScale(1)
-                return
-            }
-
-            setScale(Math.min(
-                1,
-                (width - MOBILE_GUTTER) / PHONE_WIDTH,
-                (height - MOBILE_GUTTER) / PHONE_HEIGHT
-            ))
+        function updateViewportMode() {
+            setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT)
         }
 
-        updateScale()
-        window.addEventListener('resize', updateScale)
-        return () => window.removeEventListener('resize', updateScale)
+        updateViewportMode()
+        window.addEventListener('resize', updateViewportMode)
+        return () => window.removeEventListener('resize', updateViewportMode)
     }, [])
 
     return (
         <div className="phone-frame-shell" style={{
-            width: PHONE_WIDTH * scale,
-            height: PHONE_HEIGHT * scale,
+            width: isMobile ? '100vw' : PHONE_WIDTH,
+            height: isMobile ? '100dvh' : PHONE_HEIGHT,
         }}>
             <div className="phone-frame" style={{
-                width: PHONE_WIDTH,
-                height: PHONE_HEIGHT,
-                borderRadius: 48,
+                width: isMobile ? '100%' : PHONE_WIDTH,
+                height: isMobile ? '100%' : PHONE_HEIGHT,
+                borderRadius: isMobile ? 0 : 48,
                 overflow: 'hidden',
                 position: 'relative',
                 background: dark ? '#000' : '#F2F2F7',
-                boxShadow: '0 40px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.12)',
+                boxShadow: isMobile ? 'none' : '0 40px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.12)',
                 fontFamily: '-apple-system, system-ui, sans-serif',
                 WebkitFontSmoothing: 'antialiased',
-                transform: `scale(${scale})`,
-                transformOrigin: 'top left',
             }}>
                 {/* Dynamic Island */}
                 <div className="phone-dynamic-island" style={{
@@ -97,7 +83,7 @@ export default function PhoneFrame({ children, dark = true }) {
                     {children}
                 </div>
                 {/* Home indicator */}
-                <div style={{
+                <div className="phone-home-indicator" style={{
                     position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 60,
                     height: 34, display: 'flex', justifyContent: 'center', alignItems: 'flex-end',
                     paddingBottom: 8, pointerEvents: 'none',
