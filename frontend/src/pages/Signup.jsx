@@ -3,8 +3,10 @@
 //
 
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 
+import PhoneFrame from '../components/PhoneFrame.jsx'
 import { COG_USER_POOL_ID, COG_CLIENT_ID } from '../aws-config'
 import { CognitoUserPool, CognitoUserAttribute } from 'amazon-cognito-identity-js'
 import { logError, logInfo, logWarn } from '../utils/logger.js'
@@ -68,9 +70,13 @@ export default function SignUp() {
 
     return (
         <div className="auth-outer">
-            <div className="auth-card">
+            <PhoneFrame dark={false}>
+            <div className="auth-screen">
                 <div className="auth-banner">
-                    <div className="auth-brand">BiteRoll</div>
+                    <div className="auth-brand-lockup">
+                        <img src="/logo2.png" alt="BiteRoll logo" className="auth-logo" />
+                        <div className="auth-brand">BiteRoll<span className="auth-brand-dot" /></div>
+                    </div>
                     <p className="auth-tagline">Find your next favorite meal.</p>
                 </div>
                 <div className="auth-pane">
@@ -119,9 +125,11 @@ export default function SignUp() {
                             {fieldErrors.confirm && <p className="auth-error">{fieldErrors.confirm}</p>}
                         </label>
                         <button type="submit" className="auth-submit">Create account</button>
+                        <Link to="/login" className="auth-link">Already have an account? Sign in</Link>
                     </form>
                 </div>
             </div>
+            </PhoneFrame>
         </div>
     )
 }

@@ -9,9 +9,16 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: biteroll-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-2
+
 jobs:
-  build:
-    name: Build Frontend
+  ci:
+    name: CI Checks
     runs-on: ubuntu-latest
 
     steps:
@@ -25,48 +32,52 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
         run: npm ci
+        working-directory: frontend
+
+      - name: Lint frontend
+        run: npm run lint
         working-directory: frontend
 
       - name: Build frontend
         run: npm run build
         working-directory: frontend
 
-      - name: Upload frontend build
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: frontend/dist
+      - name: Validate Lambda syntax
+        run: python -m py_compile lambda/lambda.py
+
+      - name: Validate deploy scripts syntax
+        run: bash -n scripts/deploy.sh scripts/deploy-west.sh scripts/status.sh
 
   deploy:
-    name: Deploy Frontend
+    name: Deploy Frontend And Backend
     runs-on: ubuntu-latest
-    needs: build
+    needs: ci
     if: github.event_name != 'pull_request'
 
     steps:
-      - name: Download frontend build
-        uses: actions/download-artifact@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          name: frontend-dist
-          path: frontend/dist
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Upload website to S3
-        run: aws s3 sync frontend/dist s3://biteroll-static-site-sawyer/ --delete --exclude "lambda/*"
+      - name: Deploy infrastructure, backend, and frontend
+        run: bash deploy.sh
+        working-directory: scripts
 
-      - name: Invalidate CloudFront cache
-        run: |
-          DISTRIBUTION_ID=$(aws cloudformation describe-stack-resources \
-            --stack-name biteroll-cloudfront \
-            --logical-resource-id BiteRollCloudFront \
-            --query "StackResources[0].PhysicalResourceId" \
-            --output text)
-          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
+      - name: Deploy west region backend
+        run: bash deploy-west.sh
+        working-directory: scripts
