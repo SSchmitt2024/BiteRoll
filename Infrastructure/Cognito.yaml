@@ -12,6 +12,26 @@ Resources:
                 - email
             AutoVerifiedAttributes:
                 - email
+            VerificationMessageTemplate:
+                DefaultEmailOption: CONFIRM_WITH_CODE
+                EmailSubject: 'Your BiteRoll confirmation code'
+                EmailMessage: |
+                    <html>
+                      <body style="margin:0;padding:0;background:#FFF5DC;font-family:Arial,sans-serif;color:#1F2330;">
+                        <div style="max-width:560px;margin:0 auto;padding:28px 20px;">
+                          <div style="background:#FFD86B;border-radius:20px 20px 0 0;padding:28px 24px;text-align:center;">
+                            <div style="font-size:34px;font-weight:900;letter-spacing:-1px;color:#1F2330;">BiteRoll<span style="color:#FF7A59;">.</span></div>
+                            <div style="margin-top:8px;font-size:14px;font-weight:700;color:#3A3F52;">Swipe through nearby bites.</div>
+                          </div>
+                          <div style="background:#ffffff;border-radius:0 0 20px 20px;padding:28px 24px;text-align:center;">
+                            <h1 style="margin:0 0 10px;font-size:24px;color:#1F2330;">Confirm your email</h1>
+                            <p style="margin:0 0 22px;font-size:15px;line-height:1.5;color:#3A3F52;">Use this code to finish creating your BiteRoll account.</p>
+                            <div style="display:inline-block;background:#1F2330;color:#FFD86B;font-size:32px;font-weight:900;letter-spacing:6px;border-radius:14px;padding:16px 22px;">{####}</div>
+                            <p style="margin:22px 0 0;font-size:12px;line-height:1.5;color:#6B7280;">If you did not request this, you can ignore this email.</p>
+                          </div>
+                        </div>
+                      </body>
+                    </html>
             Policies:
                 PasswordPolicy:
                     MinimumLength: 8
@@ -42,5 +62,4 @@ Outputs:
         Value: !Ref CognitoUserPoolClient
         Export:
             Name: 'CognitoUserPoolClient'
-
 

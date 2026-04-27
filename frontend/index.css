@@ -872,6 +872,14 @@ html, body {
     text-transform: none;
 }
 
+.auth-success {
+    margin: 4px 0 0;
+    color: #247A4D;
+    font-size: 13px;
+    font-weight: 800;
+    text-align: center;
+}
+
 .auth-submit {
     margin-top: 6px;
     padding: 15px 18px;

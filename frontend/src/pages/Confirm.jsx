@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import PhoneFrame from '../components/PhoneFrame.jsx'
 import { COG_USER_POOL_ID, COG_CLIENT_ID } from '../aws-config'
@@ -16,7 +16,9 @@ const userPool = new CognitoUserPool(poolData);
 
 export default function Confirm() {
     const [ code, setCode ] = useState('');
+    const [successMessage, setSuccessMessage] = useState('')
     const location = useLocation()
+    const navigate = useNavigate()
 
     const email = location.state?.email
 
@@ -36,6 +38,8 @@ export default function Confirm() {
                 return
             }
             logInfo('email_confirmation_succeeded', { result })
+            setSuccessMessage('Email confirmed. Taking you to your feed...')
+            setTimeout(() => navigate('/feed', { replace: true }), 1200)
         })
     }
 
@@ -70,6 +74,7 @@ export default function Confirm() {
                             />
                         </label>
                         <button type="submit" className="auth-submit">Confirm</button>
+                        {successMessage && <p className="auth-success">{successMessage}</p>}
                     </form>
                 </div>
             </div>
