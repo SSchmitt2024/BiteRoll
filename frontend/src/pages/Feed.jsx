@@ -187,42 +187,40 @@ function FeedApp({ videoCards, currentIndex, setCurrentIndex, loading, likedPlac
     }
 
     const cards = videoCards.length > 0 ? videoCards : [FALLBACK_CARD]
-    const prevIndex = (currentIndex - 1 + cards.length) % cards.length
-    const nextIndex = (currentIndex + 1) % cards.length
+    const len = cards.length
 
     return (
         <div className="feed-inner" ref={feedRef} {...bind()} style={{ touchAction: 'none' }} tabIndex={-1}>
             {feedTopbar}
-            <AnimatedFeedCard className="feed-card" style={{ y: y.to(v => v - cardHeight) }}>
-                <SwipeCard
-                    key={`prev-${prevIndex}`}
-                    card={cards[prevIndex]}
-                    active={false}
-                    liked={!!likedPlaces[cards[prevIndex].placeId]}
-                    likeCount={displayedLikeCount(cards[prevIndex])}
-                    onToggleLike={handleToggleLike}
-                />
-            </AnimatedFeedCard>
-            <AnimatedFeedCard className="feed-card" style={{ y }}>
-                <SwipeCard
-                    key={`current-${currentIndex}`}
-                    card={cards[currentIndex]}
-                    active={true}
-                    liked={!!likedPlaces[cards[currentIndex].placeId]}
-                    likeCount={displayedLikeCount(cards[currentIndex])}
-                    onToggleLike={handleToggleLike}
-                />
-            </AnimatedFeedCard>
-            <AnimatedFeedCard className="feed-card" style={{ y: y.to(v => v + cardHeight) }}>
-                <SwipeCard
-                    key={`next-${nextIndex}`}
-                    card={cards[nextIndex]}
-                    active={false}
-                    liked={!!likedPlaces[cards[nextIndex].placeId]}
-                    likeCount={displayedLikeCount(cards[nextIndex])}
-                    onToggleLike={handleToggleLike}
-                />
-            </AnimatedFeedCard>
+            {cards.map((card, i) => {
+                let style
+                let active = false
+                if (i === currentIndex) {
+                    style = { y }
+                    active = true
+                } else if (i === (currentIndex + 1) % len) {
+                    style = { y: y.to(v => v + cardHeight) }
+                } else if (i === (currentIndex - 1 + len) % len) {
+                    style = { y: y.to(v => v - cardHeight) }
+                } else {
+                    return null
+                }
+                return (
+                    <AnimatedFeedCard
+                        key={`${card.placeId}-${card.video}`}
+                        className="feed-card"
+                        style={style}
+                    >
+                        <SwipeCard
+                            card={card}
+                            active={active}
+                            liked={!!likedPlaces[card.placeId]}
+                            likeCount={displayedLikeCount(card)}
+                            onToggleLike={handleToggleLike}
+                        />
+                    </AnimatedFeedCard>
+                )
+            })}
             {rangeFilter}
         </div>
     )
