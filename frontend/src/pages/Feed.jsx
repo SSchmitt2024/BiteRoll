@@ -9,6 +9,7 @@ import PhoneFrame from '../components/PhoneFrame.jsx'
 import { COG_USER_POOL_ID, COG_CLIENT_ID } from '../aws-config'
 import { logError, logInfo, logWarn } from '../utils/logger.js'
 import { authHeaders } from '../utils/apiAuth.js'
+import { apiFetch } from '../utils/apiFetch.js'
 
 const RADIUS_OPTIONS_MILES = [1, 3, 5, 10, 100]
 const METERS_PER_MILE = 1609.344
@@ -233,7 +234,7 @@ export default function Feed() {
         const radiusMeters = Math.round(radiusMiles * METERS_PER_MILE)
         logInfo('feed_request_started', { radiusMeters })
         authHeaders()
-        .then(headers => fetch(`${import.meta.env.VITE_API_BASE_URL}/feed?lat=${position.lat}&lng=${position.lng}&radius=${radiusMeters}`, { headers }))
+        .then(headers => apiFetch(`/feed?lat=${position.lat}&lng=${position.lng}&radius=${radiusMeters}`, { headers }))
         .then(response => {
             if (!response.ok) throw new Error(`Feed request failed with status ${response.status}`)
             return response.json()
@@ -274,7 +275,7 @@ export default function Feed() {
             [placeId]: (prev[placeId] || 0) + (nextLiked ? 1 : -1)
         }))
         authHeaders()
-        .then(headers => fetch(`${import.meta.env.VITE_API_BASE_URL}/like?placeId=${placeId}&action=${action}`, {
+        .then(headers => apiFetch(`/like?placeId=${placeId}&action=${action}`, {
             method: 'POST',
             headers
         }))

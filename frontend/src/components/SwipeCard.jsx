@@ -2,10 +2,12 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import '../../index.css'
 import { logError, logInfo, logWarn } from '../utils/logger.js'
 import { authHeaders } from '../utils/apiAuth.js'
+import { apiFetch } from '../utils/apiFetch.js'
 import { HeartIcon, MenuIcon, CloseIcon } from './Icons.jsx'
 
 export default function SwipeCard({ card, active, liked, likeCount, onToggleLike }) {
     const isFallback = card._isFallback
+    const cardTags = Array.isArray(card.tags) ? card.tags.slice(0, 3) : []
     const [menu, setMenu] = useState(null)
     const [menuOpen, setMenuOpen] = useState(false)
     const [menuLoading, setMenuLoading] = useState(false)
@@ -50,7 +52,7 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
         logInfo('menu_request_started', { placeId: card.placeId })
         try {
             const headers = await authHeaders()
-            const menuResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/menu?placeId=${card.placeId}`, { headers })
+            const menuResponse = await apiFetch(`/menu?placeId=${card.placeId}`, { headers })
             if (!menuResponse.ok) throw new Error('Menu not found')
 
             const menuData = await menuResponse.json()
@@ -92,9 +94,21 @@ export default function SwipeCard({ card, active, liked, likeCount, onToggleLike
             <div className="card-vignette" />
 
             {!isFallback && (
-                <div className="restaurant-pill">
-                    <span className="pill-initial">{card.name?.[0] || 'B'}</span>
-                    <span className="pill-name">{card.name}</span>
+                <div className="card-meta">
+                    <div className="restaurant-pill">
+                        <span className="pill-initial">{card.name?.[0] || 'B'}</span>
+                        <span className="pill-name">{card.name}</span>
+                    </div>
+                    {card.description && (
+                        <p className="card-description">{card.description}</p>
+                    )}
+                    {cardTags.length > 0 && (
+                        <div className="card-tags">
+                            {cardTags.map(tag => (
+                                <span key={tag}>#{tag}</span>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 

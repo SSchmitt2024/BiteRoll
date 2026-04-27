@@ -1,4 +1,4 @@
-import {COG_CLIENT_ID, COGNITO_URL} from '../aws-config'
+/*import {COG_CLIENT_ID, COGNITO_URL} from '../aws-config'
 
 async function cognitoPost(target, body) {
     const rest = await fetch(COGNITO_URL, {
@@ -29,3 +29,4 @@ export async function signup(username, email, password) {
     }
     await cognitoPost('SignUp', body);
 }
+*/
