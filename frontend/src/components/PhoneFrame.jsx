@@ -85,7 +85,7 @@ export default function PhoneFrame({ children, dark = true }) {
                 {/* Home indicator */}
                 <div className="phone-home-indicator" style={{
                     position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 60,
-                    height: 34, display: 'flex', justifyContent: 'center', alignItems: 'flex-end',
+                    height: 34, display: isMobile ? 'none' : 'flex', justifyContent: 'center', alignItems: 'flex-end',
                     paddingBottom: 8, pointerEvents: 'none',
                 }}>
                     <div style={{

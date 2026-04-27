@@ -497,14 +497,21 @@ html, body {
     position: relative;
 }
 
+.rail-btn svg {
+    display: block;
+    position: relative;
+    z-index: 1;
+}
+
 .rail-btn-highlight {
     filter: drop-shadow(0 0 12px rgba(255,216,107,0.6));
+    width: 64px;
 }
 
 .rail-btn-highlight::before {
     content: '';
     position: absolute;
-    top: -4px;
+    top: -6px;
     left: 50%;
     transform: translateX(-50%);
     width: 56px;
@@ -512,6 +519,10 @@ html, body {
     border-radius: 50%;
     background: rgba(255,216,107,0.18);
     pointer-events: none;
+}
+
+.rail-btn-highlight .rail-label {
+    margin-top: 4px;
 }
 
 .rail-label {
