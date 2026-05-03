@@ -57,10 +57,18 @@ prepare_cloudtrail_bucket_name() {
     local account_id
     local candidate
     local suffix
+    local existing
 
     if aws cloudformation describe-stacks \
         --stack-name biteroll-cloudtrail \
         >/dev/null 2>&1; then
+        existing=$(aws cloudformation describe-stacks \
+            --stack-name biteroll-cloudtrail \
+            --query "Stacks[0].Parameters[?ParameterKey=='CloudTrailBucketName'].ParameterValue | [0]" \
+            --output text 2>/dev/null)
+        if [ -n "$existing" ] && [ "$existing" != "None" ]; then
+            CLOUDTRAIL_BUCKET_NAME="$existing"
+        fi
         return
     fi
 
@@ -133,7 +141,10 @@ echo "[ 8/17 ] CloudFront"
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/CloudFront.yaml \
     --stack-name biteroll-cloudfront \
-    --parameter-overrides WebACLArn="$WAF_WEB_ACL_ARN"
+    --parameter-overrides \
+      WebACLArn="$WAF_WEB_ACL_ARN" \
+      AppDomainName=app.sawyerschmitt.dev \
+      AcmCertArn=arn:aws:acm:us-east-1:640706953694:certificate/aeaca4a7-aa2a-4d42-90df-11213641b249
 
 echo "[ 9/17 ] Bucket Policy"
 aws cloudformation deploy --no-fail-on-empty-changeset \
@@ -183,6 +194,21 @@ aws cloudformation deploy --no-fail-on-empty-changeset \
 echo "[ 12/17 ] West region backend and API"
 bash "$SCRIPT_DIR/deploy-west.sh"
 cd "$SCRIPT_DIR"
+
+echo "[ 12b/17 ] Route53"
+aws cloudformation deploy \
+    --template-file ../Infrastructure/Route53.yaml \
+    --stack-name biteroll-route53 \
+    --region us-east-1 \
+    --parameter-overrides \
+      HostedZoneName=sawyerschmitt.dev. \
+      ApiDomainName=api.sawyerschmitt.dev \
+      AppDomainName=app.sawyerschmitt.dev \
+      EastApiRegionalDomainName=d-awcvt7msp8.execute-api.us-east-2.amazonaws.com \
+      EastApiRegionalHostedZoneId=ZOJJZC49E0EPZ \
+      WestApiRegionalDomainName=d-7momcr4v9h.execute-api.us-west-2.amazonaws.com \
+      WestApiRegionalHostedZoneId=Z2OJLYMUO9EFXC \
+      CloudFrontDomainName=d3obuxdbqtp1d.cloudfront.net
 
 export VITE_COGNITO_USER_POOL_ID=$(aws cloudformation list-exports \
     --query "Exports[?Name=='CognitoUserPoolID'].Value" --output text)
