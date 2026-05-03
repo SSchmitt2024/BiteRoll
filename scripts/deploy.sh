@@ -55,6 +55,8 @@ ensure_google_maps_secret() {
 
 prepare_cloudtrail_bucket_name() {
     local account_id
+    local candidate
+    local suffix
 
     if aws cloudformation describe-stacks \
         --stack-name biteroll-cloudtrail \
@@ -69,7 +71,16 @@ prepare_cloudtrail_bucket_name() {
     fi
 
     account_id=$(aws sts get-caller-identity --query Account --output text)
-    CLOUDTRAIL_BUCKET_NAME="biteroll-cloudtrail-logs-sawyer-$account_id"
+    candidate="biteroll-cloudtrail-logs-sawyer-$account_id"
+
+    if aws s3api head-bucket \
+        --bucket "$candidate" \
+        >/dev/null 2>&1; then
+        suffix=$(date +%s)
+        candidate="biteroll-cloudtrail-logs-sawyer-$account_id-$suffix"
+    fi
+
+    CLOUDTRAIL_BUCKET_NAME="$candidate"
     echo "Default CloudTrail log bucket already exists outside this stack; using $CLOUDTRAIL_BUCKET_NAME."
 }
 
