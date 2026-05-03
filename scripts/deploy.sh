@@ -1,5 +1,5 @@
 #!/bin/bash
-
+ 
 set -e
 export AWS_PAGER=""
 trap 'status=$?; line=$LINENO; echo ""; echo "DEPLOY FAILED at line $line (exit code $status)"; exit $status' ERR
