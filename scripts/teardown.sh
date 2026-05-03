@@ -1,6 +1,6 @@
 #!/bin/bash
 # Tears down non-stateful BiteRoll infrastructure.
-# Preserves DynamoDB, Cognito, Secrets Manager, and media buckets by default.
+# Preserves DynamoDB, Cognito, Secrets Manager, media buckets, and CI deploy IAM by default.
 
 set -euo pipefail
 export AWS_PAGER=""
@@ -12,10 +12,11 @@ WEST_LAMBDA_BUCKET="${WEST_LAMBDA_BUCKET:-biteroll-lambda-code-west}"
 
 YES=false
 DRY_RUN=false
+DELETE_GITHUB_ACTIONS_IAM=false
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") [--yes] [--dry-run]
+Usage: $(basename "$0") [--yes] [--dry-run] [--delete-github-actions-iam]
 
 Deletes non-stateful BiteRoll resources from $PRIMARY_REGION and $WEST_REGION.
 
@@ -25,12 +26,14 @@ Preserved by default:
   - biteroll-secrets ($PRIMARY_REGION, if deployed)
   - biteroll-s3-media ($PRIMARY_REGION)
   - biteroll-s3-media-west ($WEST_REGION)
+  - biteroll-github-actions-iam ($PRIMARY_REGION)
   - biteroll/google-maps-api-key secrets
 
 Options:
-  --yes      Run without the confirmation prompt.
-  --dry-run  Print what would be deleted without deleting it.
-  --help     Show this help text.
+  --yes                        Run without the confirmation prompt.
+  --dry-run                    Print what would be deleted without deleting it.
+  --delete-github-actions-iam  Also delete the CI deploy IAM stack.
+  --help                       Show this help text.
 EOF
 }
 
@@ -41,6 +44,9 @@ while [ $# -gt 0 ]; do
             ;;
         --dry-run)
             DRY_RUN=true
+            ;;
+        --delete-github-actions-iam)
+            DELETE_GITHUB_ACTIONS_IAM=true
             ;;
         --help|-h)
             usage
@@ -133,8 +139,11 @@ echo "Will delete stacks:"
 echo "  $WEST_REGION: biteroll-api-gateway, biteroll-lambda"
 echo "  $PRIMARY_REGION: biteroll-route53, biteroll-cloudwatch, biteroll-cloudtrail,"
 echo "  $PRIMARY_REGION: biteroll-budget, biteroll-s3-policy, biteroll-api-gateway,"
-echo "  $PRIMARY_REGION: biteroll-lambda, biteroll-cloudfront, biteroll-github-actions-iam,"
+echo "  $PRIMARY_REGION: biteroll-lambda, biteroll-cloudfront,"
 echo "  $PRIMARY_REGION: biteroll-sns-topic, biteroll-s3-static-site"
+if [ "$DELETE_GITHUB_ACTIONS_IAM" = true ]; then
+    echo "  $PRIMARY_REGION: biteroll-github-actions-iam"
+fi
 echo ""
 echo "Will delete buckets:"
 echo "  $WEST_REGION: $WEST_LAMBDA_BUCKET"
@@ -143,6 +152,9 @@ echo ""
 echo "Will preserve stateful stacks/resources:"
 echo "  $PRIMARY_REGION: biteroll-DynamoDB, biteroll-cognito, biteroll-secrets, biteroll-s3-media"
 echo "  $WEST_REGION: biteroll-s3-media-west"
+if [ "$DELETE_GITHUB_ACTIONS_IAM" = false ]; then
+    echo "  $PRIMARY_REGION: biteroll-github-actions-iam"
+fi
 echo "  Secrets named biteroll/google-maps-api-key"
 echo ""
 
@@ -170,7 +182,11 @@ delete_stack biteroll-s3-policy "$PRIMARY_REGION"
 delete_stack biteroll-api-gateway "$PRIMARY_REGION"
 delete_stack biteroll-lambda "$PRIMARY_REGION"
 delete_stack biteroll-cloudfront "$PRIMARY_REGION"
-delete_stack biteroll-github-actions-iam "$PRIMARY_REGION"
+if [ "$DELETE_GITHUB_ACTIONS_IAM" = true ]; then
+    delete_stack biteroll-github-actions-iam "$PRIMARY_REGION"
+else
+    echo "Preserving biteroll-github-actions-iam ($PRIMARY_REGION)"
+fi
 delete_stack biteroll-sns-topic "$PRIMARY_REGION"
 
 echo ""

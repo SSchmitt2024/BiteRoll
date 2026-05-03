@@ -40,6 +40,7 @@ Resources:
                       Action:
                           - s3:CreateBucket
                           - s3:DeleteBucketPolicy
+                          - s3:GetBucketAcl
                           - s3:GetBucketLocation
                           - s3:GetBucketPolicy
                           - s3:GetBucketVersioning
@@ -48,6 +49,7 @@ Resources:
                           - s3:GetBucketOwnershipControls
                           - s3:GetReplicationConfiguration
                           - s3:ListBucket
+                          - s3:PutBucketAcl
                           - s3:PutBucketCORS
                           - s3:PutBucketOwnershipControls
                           - s3:PutBucketPolicy
@@ -55,6 +57,7 @@ Resources:
                           - s3:PutBucketReplication
                           - s3:PutBucketTagging
                           - s3:PutBucketVersioning
+                          - s3:PutBucketWebsite
                           - s3:PutEncryptionConfiguration
                           - s3:PutLifecycleConfiguration
                       Resource:
@@ -82,6 +85,11 @@ Resources:
                       Action:
                           - cloudfront:*
                       Resource: '*'
+                    - Sid: ManageBiteRollWaf
+                      Effect: Allow
+                      Action:
+                          - wafv2:*
+                      Resource: '*'
                     - Sid: ManageBiteRollObservability
                       Effect: Allow
                       Action:
@@ -107,25 +115,34 @@ Resources:
                       Effect: Allow
                       Action:
                           - iam:AttachRolePolicy
+                          - iam:AttachUserPolicy
                           - iam:CreatePolicy
+                          - iam:CreatePolicyVersion
                           - iam:CreateRole
+                          - iam:DeletePolicy
+                          - iam:DeletePolicyVersion
                           - iam:DeleteRole
                           - iam:DeleteRolePolicy
                           - iam:DetachRolePolicy
+                          - iam:DetachUserPolicy
                           - iam:GetPolicy
                           - iam:GetPolicyVersion
                           - iam:GetRole
                           - iam:GetRolePolicy
+                          - iam:ListAttachedUserPolicies
                           - iam:ListAttachedRolePolicies
                           - iam:ListPolicyVersions
                           - iam:ListRolePolicies
                           - iam:PassRole
                           - iam:PutRolePolicy
+                          - iam:SetDefaultPolicyVersion
                           - iam:TagRole
                           - iam:UpdateAssumeRolePolicy
                       Resource:
                           - 'arn:aws:iam::*:role/biteroll-*'
                           - 'arn:aws:iam::*:policy/biteroll-*'
+                          - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/BiteRollGitHubActionsDeploy'
+                          - !Sub 'arn:aws:iam::${AWS::AccountId}:user/${GitHubActionsUserName}'
                     - Sid: UpdateThisGitHubActionsPolicy
                       Effect: Allow
                       Action:

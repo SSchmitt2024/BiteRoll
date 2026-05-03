@@ -48,7 +48,7 @@ jobs:
         run: python -m py_compile lambda/lambda.py
 
       - name: Validate deploy scripts syntax
-        run: bash -n scripts/deploy.sh scripts/deploy-west.sh scripts/status.sh
+        run: bash -n scripts/deploy.sh scripts/deploy-west.sh scripts/status.sh scripts/teardown.sh
 
   deploy:
     name: Deploy Frontend And Backend
@@ -77,7 +77,5 @@ jobs:
       - name: Deploy infrastructure, backend, and frontend
         run: bash deploy.sh
         working-directory: scripts
-
-      - name: Deploy west region backend
-        run: bash deploy-west.sh
-        working-directory: scripts
+        env:
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
