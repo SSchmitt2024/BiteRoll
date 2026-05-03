@@ -7,6 +7,7 @@ trap 'status=$?; line=$LINENO; echo ""; echo "DEPLOY FAILED at line $line (exit 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 EAST_SECRET_ARN=""
+CLOUDTRAIL_BUCKET_NAME="${CLOUDTRAIL_BUCKET_NAME:-biteroll-cloudtrail-logs-sawyer}"
 
 require_google_maps_key() {
     if [ -z "${GOOGLE_MAPS_API_KEY:-}" ]; then
@@ -50,6 +51,26 @@ ensure_google_maps_secret() {
     EAST_SECRET_ARN=$(aws cloudformation list-exports \
         --query "Exports[?Name=='SecretsARN'].Value" \
         --output text)
+}
+
+prepare_cloudtrail_bucket_name() {
+    local account_id
+
+    if aws cloudformation describe-stacks \
+        --stack-name biteroll-cloudtrail \
+        >/dev/null 2>&1; then
+        return
+    fi
+
+    if ! aws s3api head-bucket \
+        --bucket "$CLOUDTRAIL_BUCKET_NAME" \
+        >/dev/null 2>&1; then
+        return
+    fi
+
+    account_id=$(aws sts get-caller-identity --query Account --output text)
+    CLOUDTRAIL_BUCKET_NAME="biteroll-cloudtrail-logs-sawyer-$account_id"
+    echo "Default CloudTrail log bucket already exists outside this stack; using $CLOUDTRAIL_BUCKET_NAME."
 }
 
 echo "[ 1/17 ] Cognito"
@@ -199,9 +220,11 @@ aws cloudformation deploy --no-fail-on-empty-changeset \
     --stack-name biteroll-cloudwatch
 
 echo "[ 16/17 ] CloudTrail"
+prepare_cloudtrail_bucket_name
 aws cloudformation deploy --no-fail-on-empty-changeset \
     --template-file ../Infrastructure/CloudTrail.yaml \
-    --stack-name biteroll-cloudtrail
+    --stack-name biteroll-cloudtrail \
+    --parameter-overrides CloudTrailBucketName="$CLOUDTRAIL_BUCKET_NAME"
 
 echo "[ 17/17 ] Budget"
 aws cloudformation deploy --no-fail-on-empty-changeset \
